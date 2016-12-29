@@ -3,7 +3,6 @@
 #include "ss_board.h"
 #include "ss_driver.h"
 #include "ss_generic_factory.h"
-#include "ss.h"
 #include "ss_renderer.h"
 #include "ss_solver.h"
 

@@ -5,12 +5,12 @@
 #include <utility>
 #include <boost/exception/all.hpp>
 #include <iostream>
+#include <memory>
 
 namespace ss{
 
 	template<class T>
-	struct generic_factory{
-		generic_factory& register_(std::string const& token, std::shared_ptr<T> proto){
+	struct generic_factory{ generic_factory& register_(std::string const& token, std::shared_ptr<T> proto){
                         std::cerr << "registing token=" << token << "\n";
 			protos_.insert(std::make_pair(token, std::move(proto)));
 			return *this;
