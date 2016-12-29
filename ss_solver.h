@@ -26,6 +26,26 @@ namespace ss{
                                         dict_(dict)
                                 {}
                                 player_move solve(board const& board, std::vector<tile_t> const& rack){
+                                        /*
+                                         * Strategy here is to using the perimeter of the board
+                                         * as the starting point to every iteration, then for every starting
+                                         * point, see if any length permutation of the letters are a valid word.
+                                         * For any valid move, push on to the candidate stack
+                                         *
+                                         * return the candidate move with the hightest score
+                                         * 
+                                         * def:
+                                         *      starting point - square (x,y), with either 
+                                         *              (x+d,y  ) is placed, or
+                                         *              (x  ,y+d) is placed [where d \in {-1,+1}
+                                         *
+                                         *      valid move - placement of tiles T, such that
+                                         *              the set of all words now on the board
+                                         *              are all valid in the dictionary
+                                         *
+                                         *
+                                         *
+                                         */
                                         return skip_go{};
                                 }
                                 std::shared_ptr<strategy> clone(){
@@ -36,6 +56,7 @@ namespace ss{
                         };
                         std::ifstream fstr("dictionary.txt");
                         std::vector<std::string> proto_dict;
+                        boost::sort( proto_dict);
                         for(;;){
                                 std::string line;
                                 std::getline(fstr, line);
