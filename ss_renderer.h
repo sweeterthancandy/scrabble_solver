@@ -2,7 +2,7 @@ namespace ss{
 
 	struct renderer{
                 virtual ~renderer()=default;
-                virtual void render(board const& board, score_board const& sboard)=0;
+                virtual void render(board const& board)=0;
                 virtual std::shared_ptr<renderer> clone()=0;
 	};
 
@@ -13,7 +13,7 @@ namespace ss{
                 std::shared_ptr<renderer> make_cout_renderer(){
                         struct stream_renderer : renderer{
                                 explicit stream_renderer(std::ostream& ostr):ostr_(&ostr){}
-                                void render(board const& board, score_board const& sboard){
+                                void render(board const& board){
                                         *ostr_ << std::string(board.x_len() * 3 + 2, '-') << "\n";
                                         #if 0
                                         for(size_t y= board.y_len(); y!= 0;){
@@ -23,7 +23,6 @@ namespace ss{
                                                 *ostr_ << "|";
                                                 for(size_t x=0;x!=board.x_len();++x){
                                                         auto d = board(x,y);
-                                                        auto t = sboard(x,y);
 
                                                         switch(d){
                                                         case '\0':

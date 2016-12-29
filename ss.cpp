@@ -9,13 +9,15 @@ namespace ss{
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
+                        #if 0
                         board->operator()(3,7) = 'J';
                         board->operator()(4,7) = 'O';
                         board->operator()(5,7) = 'K';
                         board->operator()(6,7) = 'E';
                         board->operator()(7,7) = 'R';
+                        #endif
 
-			r->render(*board, *sboard);
+			r->render(*board);
 
                         auto strat = strategy_factory::get_inst()
                                 ->make("brute_force");

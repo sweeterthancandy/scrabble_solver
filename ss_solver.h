@@ -52,7 +52,7 @@ namespace ss{
 
                 for(auto& word : words){
                         bool ret = std::binary_search(dict.begin(), dict.end(), word);
-                        std::cout << word << ( ret ? " Is a word" : " Is not at word") << "\n";
+                        // std::cout << word << ( ret ? " Is a word" : " Is not at word") << "\n";
                         if( ! ret ){
                                 bad_words.emplace_back(word);
                         }
@@ -100,6 +100,7 @@ namespace ss{
                                          *
                                          *
                                          */
+
                                         std::vector<std::tuple<size_t, size_t> > initial_moves;
 			
                                         auto r = renderer_factory::get_inst()->make("cout_renderer");
@@ -124,8 +125,10 @@ namespace ss{
                                         boost::for_each( initial_moves, [](auto&& _){ std::cout << "\t(" << get<0>(_) << "," << get<1>(_) << ")\n";});
 
                                         enum class direction{
-                                                x = 1,
-                                                y = 2
+                                                left,
+                                                right,
+                                                up,
+                                                down
                                         };
 
                                         struct context{
@@ -149,18 +152,20 @@ namespace ss{
                                                         context ctx = { 
                                                                 get<0>(pos),
                                                                 get<1>(pos),
-                                                                direction::x,
+                                                                direction::left,
                                                                 b,
                                                                 rck.clone_remove_tile(t)
                                                         };
                                                         ctx.b(ctx.x, ctx.y) = t;
 
-                                                        ctx.dir = direction::x;
+                                                        ctx.dir = direction::left;
                                                         stack.emplace_back(ctx);
-                                                        ctx.dir = direction::y;
+                                                        ctx.dir = direction::right;
                                                         stack.emplace_back(ctx);
-
-                                                        r->render(ctx.b, sboard);
+                                                        ctx.dir = direction::up;
+                                                        stack.emplace_back(ctx);
+                                                        ctx.dir = direction::down;
+                                                        stack.emplace_back(ctx);
 
                                                         if( validate_move( dict_, ctx.b) ){
                                                                 output_stack.push_back( ctx );
@@ -168,51 +173,77 @@ namespace ss{
                                                 }
                                         }
 
-                                        // match horizontal/x ways
-                                        auto process = [&](size_t x, size_t y, auto b, rack r, direction dir){
-                                                long left = x;
-                                                --left;
-                                                for(;0 <= left;--left){
-                                                        if( b(left,y) == '\0' ){
-                                                                break;
-                                                        }
-                                                }
-                                                if( left != -1 ){
-                                                        for( auto t : r.make_tile_set() ){
-                                                                // TODO blanks
 
+                                        for(; stack.size(); ){
+                                                auto top = stack.back();
+                                                stack.pop_back();
+
+                                                long x = top.x;
+                                                long y = top.y;
+
+                                                // There will be at most 2 moves possible
+                                                switch(top.dir){
+                                                case direction::left:
+                                                        --x;
+                                                        for(;0 <= x;--x){
+                                                                if( b(x,y) == '\0' ){
+                                                                        break;
+                                                                }
+                                                        }
+                                                        break;
+                                                case direction::right:
+                                                        ++x;
+                                                        for(;x != b.x_len();++x){
+                                                                if( b(x,y) == '\0' ){
+                                                                        break;
+                                                                }
+                                                        }
+                                                        break;
+                                                case direction::up:
+                                                        ++y;
+                                                        for(;y != b.y_len();++y){
+                                                                if( b(x,y) == '\0' ){
+                                                                        break;
+                                                                }
+                                                        }
+                                                        break;
+                                                case direction::down:
+                                                        --y;
+                                                        for(;0 <= y;--y){
+                                                                if( b(x,y) == '\0' ){
+                                                                        break;
+                                                                }
+                                                        }
+                                                        break;
+                                                }
+
+                                                if( ( 0 <= x && x <= b.x_len() ) &&
+                                                    ( 0 <= y && y <= b.y_len() ) ){
+
+                                                        for( auto t : top.left.make_tile_set() ){
+                                                                // TODO blanks
+                                                                
                                                                 context ctx = { 
-                                                                        x,y,
-                                                                        dir,
-                                                                        b,
-                                                                        r.clone_remove_tile(t)
+                                                                        static_cast<size_t>(x),static_cast<size_t>(y),
+                                                                        top.dir,
+                                                                        top.b,
+                                                                        top.left.clone_remove_tile(t)
                                                                 };
-                                                                ctx.b(left, ctx.y) = t;
+                                                                ctx.b(x, y) = t;
+                                                        
+                                                                stack.emplace_back(ctx);
 
                                                                 if( validate_move( dict_, ctx.b) ){
                                                                         output_stack.push_back( ctx );
                                                                 }
                                                         }
                                                 }
-                                        };
 
-                                        for(; stack.size(); ){
-                                                auto top = stack.back();
-                                                stack.pop_back();
-
-                                                // There will be at most 2 moves possible
-                                                switch(top.dir){
-                                                case direction::x:
-                                                        process( top.x, top.y, top.b, top.left, top.dir);
-                                                        break;
-                                                case direction::y:
-                                                        break;
-                                                }
                                         }
 
                                         std::cout << "output_stack.size() = " << output_stack.size() << "\n";
                                         for(auto&& cand : output_stack){
-                                                r->render(cand.b, sboard);
+                                                r->render(cand.b);
                                         }
 
                                         std::cout << "stack.size() = " << stack.size() << "\n";

@@ -122,6 +122,8 @@ namespace ss{
                 }
 		auto x_len()const{ return impl_->y_len(); }
 		auto y_len()const{ return impl_->x_len(); }
+
+                operator basic_array<value_type> const&(){ return *impl_; }
         private:
                 Impl* impl_;
         };
