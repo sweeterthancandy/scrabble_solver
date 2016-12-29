@@ -168,35 +168,47 @@ namespace ss{
                                                 }
                                         }
 
-                                        #if 0
+                                        // match horizontal/x ways
+                                        auto process = [&](size_t x, size_t y, auto b, rack r, direction dir){
+                                                long left = x;
+                                                --left;
+                                                for(;0 <= left;--left){
+                                                        if( b(left,y) == '\0' ){
+                                                                break;
+                                                        }
+                                                }
+                                                if( left != -1 ){
+                                                        for( auto t : r.make_tile_set() ){
+                                                                // TODO blanks
+
+                                                                context ctx = { 
+                                                                        x,y,
+                                                                        dir,
+                                                                        b,
+                                                                        r.clone_remove_tile(t)
+                                                                };
+                                                                ctx.b(left, ctx.y) = t;
+
+                                                                if( validate_move( dict_, ctx.b) ){
+                                                                        output_stack.push_back( ctx );
+                                                                }
+                                                        }
+                                                }
+                                        };
+
                                         for(; stack.size(); ){
                                                 auto top = stack.back();
                                                 stack.pop_back();
 
-                                                size_t left;
-                                                size_t right;
-                                                size_t mid;
-
                                                 // There will be at most 2 moves possible
-                                                switch(get<2>(top)){
+                                                switch(top.dir){
                                                 case direction::x:
-                                                        left = get<0>(top);
-                                                        for(;left!=0;){
-                                                                --left;
-                                                                if( get<
-                                                        right = get<0>(top);
-                                                        mid = get<1>(top);
+                                                        process( top.x, top.y, top.b, top.left, top.dir);
                                                         break;
                                                 case direction::y:
-                                                        left = get<1>(top);
-                                                        right = get<1>(top);
-                                                        mid = get<0>(top);
                                                         break;
                                                 }
-
-
                                         }
-                                        #endif
 
                                         std::cout << "output_stack.size() = " << output_stack.size() << "\n";
                                         for(auto&& cand : output_stack){
