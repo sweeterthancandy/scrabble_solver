@@ -52,7 +52,7 @@ namespace ss{
 
                 for(auto& word : words){
                         bool ret = std::binary_search(dict.begin(), dict.end(), word);
-                        // std::cout << word << ( ret ? " Is a word" : " Is not at word") << "\n";
+                        //std::cout << word << ( ret ? " Is a word" : " Is not at word") << "\n";
                         if( ! ret ){
                                 bad_words.emplace_back(word);
                         }
@@ -217,19 +217,22 @@ namespace ss{
                                                         break;
                                                 }
 
-                                                if( ( 0 <= x && x <= b.x_len() ) &&
-                                                    ( 0 <= y && y <= b.y_len() ) ){
+                                                if( ( 0 <= x && x < b.x_len() ) &&
+                                                    ( 0 <= y && y < b.y_len() ) ){
 
                                                         for( auto t : top.left.make_tile_set() ){
                                                                 // TODO blanks
                                                                 
                                                                 context ctx = { 
-                                                                        static_cast<size_t>(x),static_cast<size_t>(y),
+                                                                        static_cast<size_t>(x),
+                                                                        static_cast<size_t>(y),
                                                                         top.dir,
                                                                         top.b,
                                                                         top.left.clone_remove_tile(t)
                                                                 };
                                                                 ctx.b(x, y) = t;
+
+                                                                //r->render(ctx.b);
                                                         
                                                                 stack.emplace_back(ctx);
 
@@ -241,12 +244,13 @@ namespace ss{
 
                                         }
 
-                                        std::cout << "output_stack.size() = " << output_stack.size() << "\n";
-                                        for(auto&& cand : output_stack){
-                                                r->render(cand.b);
-                                        }
+                                        boost::sort( output_stack, [](auto&& left, auto&& right){
+                                                return left.left.size() < right.left.size();
+                                        });
 
-                                        std::cout << "stack.size() = " << stack.size() << "\n";
+                                        r->render(output_stack.front().b);
+
+                                        std::cout << "output_stack.size() = " << output_stack.size() << "\n";
 
                                         return skip_go{};
                                 }

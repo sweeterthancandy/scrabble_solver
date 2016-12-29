@@ -31,23 +31,25 @@ namespace ss{
                         tiles_(tiles){
                         boost::sort(tiles_);
                 }
+                explicit rack(std::string const& s)
+                        :tiles_(s.begin(), s.end()){
+                        boost::sort(tiles_);
+                }
                 rack clone_remove_tile(tile_t t)const{
                         decltype(tiles_) ret;
+                        auto pos = boost::find(tiles_, t);
                         auto iter = boost::begin(tiles_);
                         auto end = boost::end(tiles_);
-                        for(; ;  ++iter){
-                                if( iter == end ){
-                                        std::stringstream msg;
-                                        msg << "no tile " << t << " in rack";
-                                        BOOST_THROW_EXCEPTION(std::domain_error(msg.str()));
-                                }
-                                if( *iter == t ){
-                                        ++iter;
-                                        break;
-                                }
+                        if( pos == end ){
+                                std::stringstream msg;
+                                msg << "no tile " << t << " in rack";
+                                BOOST_THROW_EXCEPTION(std::domain_error(msg.str()));
                         }
-                        std::copy(iter, end, std::back_inserter(ret));
+                        std::copy(iter, pos, std::back_inserter(ret));
+                        ++pos;
+                        std::copy( pos, end, std::back_inserter(ret));
                         assert( boost::is_sorted(ret) );
+                        assert( ret.size() + 1 == this->size() );
                         return rack(ret);
                         
                 }
@@ -56,6 +58,7 @@ namespace ss{
                         boost::for_each( tiles_, [&tmp](auto&& _){ tmp.insert(_); });
                         return std::move(tmp);
                 }
+                size_t size()const{return tiles_.size();}
         private:
                 std::vector<tile_t> tiles_;
         };
