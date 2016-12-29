@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -5,6 +7,8 @@
 #include <boost/exception/all.hpp>
 #include <stdexcept>
 #include <boost/range/algorithm.hpp>
+#include <boost/variant.hpp>
+#include <tuple>
 
 namespace ss{
 
@@ -152,22 +156,6 @@ namespace ss{
                               make_cout_renderer()),0);
         }
 
-
-	namespace tests{
-		void render_test(){
-			auto board = board_factory::get_inst()->make("plain");
-
-			auto r = renderer_factory::get_inst()->make("cout_renderer");
-
-                        board->tile_at(3,3) = 'g';
-                        board->tile_at(4,3) = 'e';
-                        board->tile_at(5,3) = 'r';
-                        board->tile_at(6,3) = 'r';
-                        board->tile_at(7,3) = 'y';
-
-			r->render(*board);
-		}
-	}
 
 
 
