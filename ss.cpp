@@ -37,24 +37,9 @@ namespace ss{
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
-                        #if 0
-                        board->operator()(3,7) = 'J';
-                        board->operator()(4,7) = 'O';
-                        board->operator()(5,7) = 'K';
-                        board->operator()(6,7) = 'E';
-                        board->operator()(7,7) = 'R';
-                        #endif
-
-			r->render(*board);
-
                         auto strat = strategy_factory::get_inst()
                                 ->make("brute_force");
 
-                        //std::vector<tile_t> aux = {'T', 'H', 'A', 'P', 'A', 'U', 'A'};
-                        //rack rck(aux);
-                        rack rck("RETAINS");
-                        //auto move = strat->solve( *board, rck, *sboard);
-                        //std::cout << player_move_to_string(move) << "\n";
 
                         std::string board_proto = 
                         //       123456789012345
@@ -81,22 +66,35 @@ namespace ss{
                            /*3*/"               "
                            /*4*/"               "
                            /*5*/"               "
-                           /*6*/"               "
-                           /*7*/"       W       "
-                           /*8*/"   HELLO       "
-                           /*9*/"       R       "
-                          /*10*/"       L       "
-                          /*11*/"       D       "
-                          /*12*/"               "
-                          /*13*/"               "
+                           /*6*/"        COMP   "
+                           /*7*/"        L      "
+                           /*8*/"       PATHS   "
+                           /*9*/"        M  E   "
+                          /*10*/"         BELIE "
+                          /*11*/"           L   "
+                          /*12*/"           E   "
+                          /*13*/"           R   "
                           /*14*/"               "
                           /*15*/"               "
                         ;
+
+                        std::string rck_str = "AUEVNWA";
+                        rack rck(rck_str);
                         read_board_from_string(*board, board_str);
                         r->render(*board);
-                        
-                        auto move = strat->solve( *board, rck, *sboard);
-                        std::cout << player_move_to_string(move) << "\n";
+                        std::cout << "Solving for |" << rck_str << "|\n";
+
+                        auto dict = dictionary_factory::get_inst()->find("regular");
+                        auto bad_words = do_validate_board(*dict, *board);
+                        if( bad_words.size()){
+                                std::cout << "board not valid\n";
+                                boost::for_each(bad_words, [](auto&& _){
+                                        std::cout << "    " << _ << "\n";
+                                });
+                        } else {
+                                auto move = strat->solve( *board, rck, *sboard);
+                        }
+
 
 
 		}

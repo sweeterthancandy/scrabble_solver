@@ -9,19 +9,23 @@
 
 namespace ss{
 
+
 	template<class T>
 	struct generic_factory{ generic_factory& register_(std::string const& token, std::shared_ptr<T> proto){
-                        std::cerr << "registing token=" << token << "\n";
 			protos_.insert(std::make_pair(token, std::move(proto)));
 			return *this;
 		}
+                std::shared_ptr<T> find(std::string const& token){
+			auto iter = protos_.find(token);
+			if( iter == protos_.end() ){
+                                std::stringstream sstr;
+                                sstr << "unknown token=" << token;
+				BOOST_THROW_EXCEPTION(std::domain_error(sstr.str()));
+			}
+                        return iter->second;
+                }
 		template<class... Args>
 		std::shared_ptr<T> make(std::string const& token, Args const... args){
-                        
-                        boost::for_each( protos_, [&](auto&& _){
-                                std::cout << _.first << ",";
-                        });
-                        std::cout << "\n";
 			auto iter = protos_.find(token);
 			if( iter == protos_.end() ){
                                 std::stringstream sstr;

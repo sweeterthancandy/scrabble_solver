@@ -2,6 +2,7 @@
 #include "ss.h"
 #include "ss_board.h"
 #include "ss_driver.h"
+#include "ss_dict.h"
 
 #include <fstream>
 #include <functional>
@@ -44,7 +45,7 @@ namespace ss{
                 return std::move(result);
         }
 
-        inline bool validate_move(std::vector<std::string> const& dict, board b){
+        inline std::vector<std::string> do_validate_board(dictionary_t const& dict, board b){
                 std::vector<std::string> bad_words;
                 auto words = words_from_board(b);
                 auto other = words_from_board(make_const_rotate_view(b));
@@ -57,7 +58,10 @@ namespace ss{
                                 bad_words.emplace_back(word);
                         }
                 }
-                return bad_words.size() == 0;
+                return std::move(bad_words);
+        }
+        inline bool validate_board(dictionary_t const& dict, board b){
+                return do_validate_board(dict, b).size() == 0;
         }
 
         struct strategy{
@@ -73,8 +77,8 @@ namespace ss{
 
                 std::shared_ptr<strategy> make_dict_solver(){
                         struct brute_force_strategy : strategy{
-                                explicit brute_force_strategy(std::vector<std::string> const& dict):
-                                        dict_(dict)
+                                explicit brute_force_strategy(std::shared_ptr<dictionary_t> dict):
+                                        dict_(std::move(dict))
                                 {}
                                 player_move solve(board const& b, rack const& rck, score_board const& sboard){
                                         using std::get;
@@ -95,7 +99,7 @@ namespace ss{
                                          *
                                          *      valid move - placement of tiles T, such that
                                          *              the set of all words now on the board
-                                         *              are all valid in the dictionary
+                                         *              are all valid in the dictionary_t
                                          *
                                          *
                                          *
@@ -122,7 +126,7 @@ namespace ss{
                                                         }
                                                 }
                                         }
-                                        boost::for_each( initial_moves, [](auto&& _){ std::cout << "\t(" << get<0>(_) << "," << get<1>(_) << ")\n";});
+                                        //boost::for_each( initial_moves, [](auto&& _){ std::cout << "\t(" << get<0>(_) << "," << get<1>(_) << ")\n";});
 
                                         enum class direction{
                                                 left,
@@ -167,7 +171,7 @@ namespace ss{
                                                         ctx.dir = direction::down;
                                                         stack.emplace_back(ctx);
 
-                                                        if( validate_move( dict_, ctx.b) ){
+                                                        if( validate_board( *dict_, ctx.b) ){
                                                                 output_stack.push_back( ctx );
                                                         }
                                                 }
@@ -236,7 +240,7 @@ namespace ss{
                                                         
                                                                 stack.emplace_back(ctx);
 
-                                                                if( validate_move( dict_, ctx.b) ){
+                                                                if( validate_board( *dict_, ctx.b) ){
                                                                         output_stack.push_back( ctx );
                                                                 }
                                                         }
@@ -248,7 +252,11 @@ namespace ss{
                                                 return left.left.size() < right.left.size();
                                         });
 
-                                        r->render(output_stack.front().b);
+                                        if( output_stack.size() ){
+                                                r->render(output_stack.front().b);
+                                        } else {
+                                                std::cout << "no results :(\n";
+                                        }
 
                                         std::cout << "output_stack.size() = " << output_stack.size() << "\n";
 
@@ -258,22 +266,10 @@ namespace ss{
                                         return std::make_shared<brute_force_strategy>(dict_);
                                 }
                         private:
-                                std::vector<std::string> dict_;
+                                std::shared_ptr<dictionary_t> dict_;
                         };
-                        std::ifstream fstr("dictionary.txt");
-                        std::vector<std::string> proto_dict;
-                        boost::sort( proto_dict);
-                        for(;;){
-                                std::string line;
-                                std::getline(fstr, line);
-                                if(line.size()){
-                                        proto_dict.emplace_back(std::move(line));
-                                }
-                                if( fstr.eof() )
-                                        break;
-                        }
-                        std::cout << proto_dict.size() << "\n";
-                        return std::make_shared<brute_force_strategy>(proto_dict);
+                        return std::make_shared<brute_force_strategy>(
+                                dictionary_factory::get_inst()->find("regular"));
                 }
                 int reg_brute_force = ( strategy_factory::get_inst()
                                         ->register_( "brute_force", make_dict_solver()), 0 );

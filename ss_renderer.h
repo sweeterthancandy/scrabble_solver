@@ -15,10 +15,6 @@ namespace ss{
                                 explicit stream_renderer(std::ostream& ostr):ostr_(&ostr){}
                                 void render(board const& board){
                                         *ostr_ << std::string(board.x_len() * 3 + 2, '-') << "\n";
-                                        #if 0
-                                        for(size_t y= board.y_len(); y!= 0;){
-                                                --y;
-                                        #endif
                                         for(size_t y=0;y!=board.y_len();++y){
                                                 *ostr_ << "|";
                                                 for(size_t x=0;x!=board.x_len();++x){
