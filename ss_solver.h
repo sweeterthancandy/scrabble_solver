@@ -44,9 +44,8 @@ namespace ss{
                 return std::move(result);
         }
 
-        inline bool validate_move(std::vector<std::string> const& dict, board b, board const& moves){
+        inline bool validate_move(std::vector<std::string> const& dict, board b){
                 std::vector<std::string> bad_words;
-                b.paste(moves, '\0');
                 auto words = words_from_board(b);
                 auto other = words_from_board(make_const_rotate_view(b));
                 boost::copy(other, std::back_inserter(words));
@@ -58,7 +57,7 @@ namespace ss{
                                 bad_words.emplace_back(word);
                         }
                 }
-                return true;
+                return bad_words.size() == 0;
         }
 
         struct strategy{
@@ -133,7 +132,7 @@ namespace ss{
                                                 size_t x;                  // first tile placement
                                                 size_t y;                  // last tile placement
                                                 direction dir;             // move direction
-                                                board moves;               // board with placed tiles on 
+                                                board b;                   // board with placed tiles on 
                                                 rack left;                 // tiles left to play
 
                                         };
@@ -154,22 +153,54 @@ namespace ss{
                                                                 b,
                                                                 rck.clone_remove_tile(t)
                                                         };
-                                                        ctx.moves(ctx.x, ctx.y) = t;
-                                                        stack.emplace_back(ctx);
+                                                        ctx.b(ctx.x, ctx.y) = t;
 
+                                                        ctx.dir = direction::x;
+                                                        stack.emplace_back(ctx);
                                                         ctx.dir = direction::y;
                                                         stack.emplace_back(ctx);
 
-                                                        auto tmp = b;
-                                                        tmp.paste( ctx.moves, '\0');
+                                                        r->render(ctx.b, sboard);
 
-                                                        r->render(tmp, sboard);
-
-                                                        validate_move( dict_,b, ctx.moves );
-
-
-
+                                                        if( validate_move( dict_, ctx.b) ){
+                                                                output_stack.push_back( ctx );
+                                                        }
                                                 }
+                                        }
+
+                                        #if 0
+                                        for(; stack.size(); ){
+                                                auto top = stack.back();
+                                                stack.pop_back();
+
+                                                size_t left;
+                                                size_t right;
+                                                size_t mid;
+
+                                                // There will be at most 2 moves possible
+                                                switch(get<2>(top)){
+                                                case direction::x:
+                                                        left = get<0>(top);
+                                                        for(;left!=0;){
+                                                                --left;
+                                                                if( get<
+                                                        right = get<0>(top);
+                                                        mid = get<1>(top);
+                                                        break;
+                                                case direction::y:
+                                                        left = get<1>(top);
+                                                        right = get<1>(top);
+                                                        mid = get<0>(top);
+                                                        break;
+                                                }
+
+
+                                        }
+                                        #endif
+
+                                        std::cout << "output_stack.size() = " << output_stack.size() << "\n";
+                                        for(auto&& cand : output_stack){
+                                                r->render(cand.b, sboard);
                                         }
 
                                         std::cout << "stack.size() = " << stack.size() << "\n";

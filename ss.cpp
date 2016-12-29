@@ -9,11 +9,11 @@ namespace ss{
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
-                        board->operator()(3,7) = 'G';
-                        board->operator()(4,7) = 'E';
-                        board->operator()(5,7) = 'R';
-                        board->operator()(6,7) = 'R';
-                        board->operator()(7,7) = 'Y';
+                        board->operator()(3,7) = 'J';
+                        board->operator()(4,7) = 'O';
+                        board->operator()(5,7) = 'K';
+                        board->operator()(6,7) = 'E';
+                        board->operator()(7,7) = 'R';
 
 			r->render(*board, *sboard);
 
