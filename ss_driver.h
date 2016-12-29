@@ -1,9 +1,10 @@
-
-#include "ss.h"
+#pragma once
 
 #include <vector>
 #include <boost/variant.hpp>
 #include <tuple>
+
+#include "ss.h"
 
 namespace ss{
 

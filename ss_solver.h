@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ss.h"
 #include "ss_driver.h"
 
