@@ -1,0 +1,41 @@
+Small project solving scrabble probelms. Hoping to be able
+solve the best move.
+
+
+
+              -----------------------------------------------
+              |                                             |
+              |                                             |
+              |                                             |
+              |                                             |
+              |                                             |
+              |                         C  O  M  P          |
+              |                         L                   |
+              |                      P  A  T  H  S          |
+              |                         M        E          |
+              |                            B  E  L  I  E    |
+              |                                  L          |
+              |                                  E          |
+              |                                  R          |
+              |                                             |
+              |                                             |
+              -----------------------------------------------
+              Solving for |AUEVNWA|
+              -----------------------------------------------
+              |                                             |
+              |                                             |
+              |                                             |
+              |                                             |
+              |                                             |
+              |                         C  O  M  P          |
+              |                         L                   |
+              |                      P  A  T  H  S          |
+              |                         M        E          |
+              |                            B  E  L  I  E    |
+              |                                  L          |
+              |                                  E          |
+              |                   U  N  A  W  A  R  E       |
+              |                                             |
+              |                                             |
+              -----------------------------------------------
+              output_stack.size() = 291
