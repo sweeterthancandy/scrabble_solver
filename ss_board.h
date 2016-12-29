@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/multi_array.hpp>
+#include <boost/range/algorithm.hpp>
 #include <algorithm>
 
 #include "ss_generic_factory.h"
@@ -17,45 +18,62 @@ namespace ss{
 		tripple_word
 	};
 
-	struct board{
-		using board_t = boost::multi_array<decoration, 2>;
-		using tiles_t = boost::multi_array<tile_t, 2>;
+        /*
+         * Want to use a lightweight representation of the board,
+         * as potentially going to be constructing alot of them
+         */
 
-                // create a blank
-		explicit board(size_t x, size_t y):
-			board_(boost::extents[x][y]),
-			tiles_(boost::extents[x][y])
-		{}
-		explicit board(board_t const& board, tiles_t const& tiles):
-			board_(board), tiles_(tiles)
-		{
-                        std::fill( tiles_.data(), tiles_.data() + tiles_.num_elements(), ' ' );
+
+        template<class T>
+        struct basic_array{
+                using array_t = std::vector<T>;
+                basic_array(size_t x, size_t y, T const& val = T()):
+                        x_len_(x), y_len_(y),
+                        rep_(x * y, val)
+                {}
+                auto const& operator()(size_t x, size_t y)const{
+                        return rep_.at( x * y_len_ + y);
+                }
+                auto& operator()(size_t x, size_t y){
+                        return rep_.at( x * y_len_ + y);
                 }
 		size_t x_len()const{
-                        return board_.shape()[0];
+                        return x_len_;
                 }
 		size_t y_len()const{
-                        return board_.shape()[1];
+                        return y_len_;
                 }
-		std::shared_ptr<board> clone(){
-			return std::make_shared<board>(
-				board_, 
-				tiles_);
-		}
-                decoration& decoration_at(size_t x, size_t y){ return board_[x][y]; }
-                decoration const& decoration_at(size_t x, size_t y)const{ return board_[x][y]; }
-                tile_t& tile_at(size_t x, size_t y){ return tiles_[x][y]; }
-                tile_t const& tile_at(size_t x, size_t y)const{ return tiles_[x][y]; }
-	private:
-		boost::multi_array<decoration, 2> board_;
-		boost::multi_array<tile_t, 2>     tiles_;
-	};
-        
+                void fill( T const& val){
+                        boost::fill( rep_, val);
+                }
+                std::shared_ptr<basic_array> clone(){
+                        return std::make_shared<basic_array>(*this);
+                }
+        private:
+                size_t x_len_;
+                size_t y_len_;
+                array_t rep_;
+        };
+
+        using board = basic_array<tile_t>;
+        using score_board = basic_array<decoration>;
+
+
         using board_factory = generic_factory<board>;
+        using score_board_factory = generic_factory<score_board>;
 
 	namespace autoreg{
+                std::shared_ptr<score_board> make_plain_score(){
+			auto ptr = std::make_shared<score_board>(15,15, decoration::none );
+			return ptr;
+		}
+		int plain_score = ( 
+			score_board_factory::get_inst()->register_(
+				"plain",
+				make_plain_score())
+			, 0);
                 std::shared_ptr<board> make_plain(){
-			auto ptr = std::make_shared<board>(15,15);
+			auto ptr = std::make_shared<board>(15,15, '\0');
 			return ptr;
 		}
 		int plain = ( 
@@ -64,5 +82,4 @@ namespace ss{
 				make_plain())
 			, 0);
 	}
-
 }

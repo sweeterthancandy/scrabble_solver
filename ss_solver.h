@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ss.h"
+#include "ss_board.h"
 #include "ss_driver.h"
 
 #include <fstream>
@@ -14,7 +15,7 @@ namespace ss{
         struct strategy{
                 virtual ~strategy()=default;
 
-                virtual player_move solve(board const& board, std::vector<tile_t> const& rack)=0;
+                virtual player_move solve(board const& board, std::vector<tile_t> const& rack, score_board const& sboard)=0;
                 virtual std::shared_ptr<strategy> clone()=0;
         };
 
@@ -27,7 +28,7 @@ namespace ss{
                                 explicit brute_force_strategy(std::vector<std::string> const& dict):
                                         dict_(dict)
                                 {}
-                                player_move solve(board const& board, std::vector<tile_t> const& rack){
+                                player_move solve(board const& board, std::vector<tile_t> const& rack, score_board const& sboard){
                                         /*
                                          * Strategy here is to using the perimeter of the board
                                          * as the starting point to every iteration, then for every starting
@@ -48,6 +49,36 @@ namespace ss{
                                          *
                                          *
                                          */
+                                        std::vector<std::tuple<size_t, size_t> > initial_moves;
+
+                                        if( board( board.x_len()/2, board.y_len()/2) == '\0'){
+                                                initial_moves.emplace_back( board.x_len()/2, board.y_len()/2 );
+                                        } else {
+                                                for(size_t x=0;x!=board.x_len();++x){
+                                                        for(size_t y=0;y!=board.y_len();++y){
+                                                                if( board(x,y) == '\0' ){
+                                                                        if( x != board.x_len() -1 && board(x+1,y) != '\0' ){
+                                                                                initial_moves.emplace_back(x,y);
+                                                                                continue;
+                                                                        }
+                                                                        if( x != 0 && board(x-1,y) != '\0' ){
+                                                                                initial_moves.emplace_back(x,y);
+                                                                                continue;
+                                                                        }
+                                                                        if( y != board.y_len() -1 && board(x,y+1) != '\0' ){
+                                                                                initial_moves.emplace_back(x,y);
+                                                                                continue;
+                                                                        }
+                                                                        if( y != 0 && board(x,y-1) != '\0' ){
+                                                                                initial_moves.emplace_back(x,y);
+                                                                                continue;
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        using std::get;
+                                        boost::for_each( initial_moves, [](auto&& _){ std::cout << "\t(" << get<0>(_) << "," << get<1>(_) << ")\n";});
                                         return skip_go{};
                                 }
                                 std::shared_ptr<strategy> clone(){

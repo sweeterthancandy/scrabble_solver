@@ -1,7 +1,8 @@
 namespace ss{
 
 	struct renderer{
-		virtual void render(board const& board)=0;
+                virtual ~renderer()=default;
+                virtual void render(board const& board, score_board const& sboard)=0;
                 virtual std::shared_ptr<renderer> clone()=0;
 	};
 
@@ -12,16 +13,26 @@ namespace ss{
                 std::shared_ptr<renderer> make_cout_renderer(){
                         struct stream_renderer : renderer{
                                 explicit stream_renderer(std::ostream& ostr):ostr_(&ostr){}
-                                void render(board const& board){
+                                void render(board const& board, score_board const& sboard){
                                         *ostr_ << std::string(board.x_len() * 3 + 2, '-') << "\n";
                                         for(size_t y= board.y_len(); y!= 0;){
                                                 --y;
                                                 *ostr_ << "|";
                                                 for(size_t x=0;x!=board.x_len();++x){
-                                                        auto d = board.decoration_at(x,y);
-                                                        auto t = board.tile_at(x,y);
+                                                        auto d = board(x,y);
+                                                        auto t = sboard(x,y);
 
-                                                        *ostr_ << ' ' << t << ' ';
+                                                        switch(d){
+                                                        case '\0':
+                                                                *ostr_ << "   ";
+                                                                break;
+                                                        default:
+                                                                if( std::isgraph(d)){
+                                                                        *ostr_ << ' ' << d << ' ';
+                                                                }else{
+                                                                        *ostr_ << ' ' << '?' << ' ';
+                                                                }
+                                                        }
                                                 }
                                                 *ostr_ << "|\n";
                                         }
@@ -41,11 +52,5 @@ namespace ss{
                                "cout_renderer",
                               make_cout_renderer()),0);
         }
-
-
-
-
-
-        
 
 }

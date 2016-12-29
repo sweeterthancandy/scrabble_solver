@@ -5,22 +5,23 @@ namespace ss{
 	namespace tests{
 		void render_test(){
 			auto board = board_factory::get_inst()->make("plain");
+			auto sboard = score_board_factory::get_inst()->make("plain");
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
-                        board->tile_at(3,3) = 'g';
-                        board->tile_at(4,3) = 'e';
-                        board->tile_at(5,3) = 'r';
-                        board->tile_at(6,3) = 'r';
-                        board->tile_at(7,3) = 'y';
+                        board->operator()(3,7) = 'g';
+                        board->operator()(4,7) = 'e';
+                        board->operator()(5,7) = 'r';
+                        board->operator()(6,7) = 'r';
+                        board->operator()(7,7) = 'y';
 
-			r->render(*board);
+			r->render(*board, *sboard);
 
                         auto strat = strategy_factory::get_inst()
                                 ->make("brute_force");
 
                         std::vector<tile_t> rack = {'t', 'h', 'a', 'p', 'a', 'u', 'a'};
-                        auto move = strat->solve( *board, rack);
+                        auto move = strat->solve( *board, rack, *sboard);
 
                         std::cout << player_move_to_string(move) << "\n";
 

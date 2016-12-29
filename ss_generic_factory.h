@@ -7,6 +7,7 @@
 #include <iostream>
 
 namespace ss{
+
 	template<class T>
 	struct generic_factory{
 		generic_factory& register_(std::string const& token, std::shared_ptr<T> proto){
