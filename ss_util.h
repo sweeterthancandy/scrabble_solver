@@ -9,6 +9,8 @@ namespace ss{
 
         std::vector<std::string> do_validate_board(dictionary_t const& dict, board b);
         bool validate_board(dictionary_t const& dict, board b);
+        
+        void read_board_from_string(board& b, std::string const& str);
 }
 
 
