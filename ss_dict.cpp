@@ -3,7 +3,7 @@
 namespace{
         using namespace ss;
 
-        int dummy = (dictionary_factory::get_inst() ->register_( "regular", [](){
+        auto make(){
                 std::ifstream fstr("dictionary.txt");
                 auto proto_dict = std::make_shared<dictionary_t>();
                 for(;;){
@@ -16,5 +16,10 @@ namespace{
                                 break;
                 }
                 return std::move(proto_dict);
-        }()), 0 );
+        }
+        
+        int _ = (
+               dictionary_factory::get_inst()->register_(
+                       "regular",
+                      make()),0);
 }
