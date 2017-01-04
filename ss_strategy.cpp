@@ -207,6 +207,10 @@ namespace{
                 return std::make_unique<brute_force_strategy>(
                         dictionary_factory::get_inst()->make("regular"));
         }
-        int reg_brute_force = ( strategy_factory::get_inst()
-                                ->register_( "brute_force", make_dict_solver), 0 );
+        int reg_brute_force = ( strategy_factory::get_inst() ->register_( "brute_force", 
+                                                                          [](){
+                                                                                return std::make_unique<brute_force_strategy>(
+                                                                                        dictionary_factory::get_inst()->make("regular"));
+                                                                          }
+                                                                          ), 0 );
 }
