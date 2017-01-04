@@ -7,7 +7,7 @@
 namespace {
         using namespace ss;
 
-        std::shared_ptr<renderer> make_cout_renderer(){
+        auto make_cout_renderer(){
                 struct stream_renderer : renderer{
                         explicit stream_renderer(std::ostream& ostr):ostr_(&ostr){}
                         void render(board const& board){
@@ -40,10 +40,10 @@ namespace {
                 private:
                         std::ostream* ostr_;
                 };
-                return std::make_shared<stream_renderer>(std::cout);
+                return std::make_unique<stream_renderer>(std::cout);
         }
         int cout_render = (
                renderer_factory::get_inst()->register_(
                        "cout_renderer",
-                      make_cout_renderer()),0);
+                      make_cout_renderer),0);
 }

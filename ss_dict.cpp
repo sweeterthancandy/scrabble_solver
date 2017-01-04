@@ -5,7 +5,7 @@ namespace{
 
         auto make(){
                 std::ifstream fstr("dictionary.txt");
-                auto proto_dict = std::make_shared<dictionary_t>();
+                auto proto_dict = std::make_unique<dictionary_t>();
                 for(;;){
                         std::string line;
                         std::getline(fstr, line);
@@ -21,5 +21,5 @@ namespace{
         int _ = (
                dictionary_factory::get_inst()->register_(
                        "regular",
-                      make()),0);
+                      make),0);
 }

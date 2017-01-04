@@ -82,7 +82,7 @@ namespace ss{
                         r->render(board);
                         std::cout << "Solving for |" << rck_str << "|\n";
 
-                        auto dict = dictionary_factory::get_inst()->find("regular");
+                        auto dict = dictionary_factory::get_inst()->make("regular");
                         auto bad_words = do_validate_board(*dict, board);
                         if( bad_words.size()){
                                 std::cout << "board not valid\n";
@@ -100,7 +100,7 @@ namespace ss{
 }
 
 int main(){
-//  ss::tests::render_test();
+  ss::tests::render_test();
 }
 
 // vim: sw=8 ts=8
