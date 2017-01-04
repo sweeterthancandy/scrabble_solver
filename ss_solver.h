@@ -64,6 +64,7 @@ namespace ss{
                 return do_validate_board(dict, b).size() == 0;
         }
 
+
         struct strategy{
                 virtual ~strategy()=default;
 
