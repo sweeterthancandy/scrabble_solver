@@ -1,6 +1,5 @@
 #include "ss.h"
-#include "ss_solver.h"
-
+#include "ss_util.h"
 
 namespace ss{
 
@@ -32,8 +31,7 @@ namespace ss{
 
 	namespace tests{
 		void render_test(){
-			auto board = board_factory::get_inst()->make("plain");
-			auto sboard = score_board_factory::get_inst()->make("plain");
+			board board(15,15,' ');
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
@@ -80,19 +78,19 @@ namespace ss{
 
                         std::string rck_str = "AUEVNWA";
                         rack rck(rck_str);
-                        read_board_from_string(*board, board_str);
-                        r->render(*board);
+                        read_board_from_string(board, board_str);
+                        r->render(board);
                         std::cout << "Solving for |" << rck_str << "|\n";
 
                         auto dict = dictionary_factory::get_inst()->find("regular");
-                        auto bad_words = do_validate_board(*dict, *board);
+                        auto bad_words = do_validate_board(*dict, board);
                         if( bad_words.size()){
                                 std::cout << "board not valid\n";
                                 boost::for_each(bad_words, [](auto&& _){
                                         std::cout << "    " << _ << "\n";
                                 });
                         } else {
-                                auto move = strat->solve( *board, rck, *sboard);
+                                auto move = strat->solve( board, rck);
                         }
 
 
