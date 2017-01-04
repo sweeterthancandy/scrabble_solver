@@ -1,2 +1,5 @@
 .gitignore
 ss
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
