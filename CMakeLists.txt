@@ -15,11 +15,10 @@ find_package(GTest REQUIRED)
 
 include_directories(include)
 
-add_executable(ss app/ss.cpp)
+#add_executable(ss app/ss.cpp)
+#target_link_libraries(ss ss_lib)
 
 add_executable(ss_test ${test_sources})
-
-target_link_libraries(ss ss_lib)
 
 target_link_libraries(ss_test GTest::GTest GTest::Main)
 target_link_libraries(ss_test ss_lib)
