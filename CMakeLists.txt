@@ -15,8 +15,8 @@ find_package(GTest REQUIRED)
 
 include_directories(include)
 
-#add_executable(ss app/ss.cpp)
-#target_link_libraries(ss ss_lib)
+add_executable(ss app/ss.cpp)
+target_link_libraries(ss ss_lib)
 
 add_executable(ss_test ${test_sources})
 

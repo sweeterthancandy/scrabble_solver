@@ -20,6 +20,9 @@ namespace ss{
         bool validate_board(dictionary_t const& dict, board b);
         
         void read_board_from_string(board& b, std::string const& str);
+
+        std::vector<std::tuple<size_t, size_t> > find_initial_moves(board const& b);
+
 }
 
 

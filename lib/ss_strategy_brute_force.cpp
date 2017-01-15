@@ -7,6 +7,10 @@
 #include <fstream>
 #include <functional>
 
+/*
+ *
+ */
+
 namespace{
         using namespace ss;
 
@@ -38,29 +42,9 @@ namespace{
                          *
                          *
                          */
-
-                        std::vector<std::tuple<size_t, size_t> > initial_moves;
-        
                         auto r = renderer_factory::get_inst()->make("cout_renderer");
 
-                        if( b( b.x_len()/2, b.y_len()/2) == '\0'){
-                                initial_moves.emplace_back( b.x_len()/2, b.y_len()/2 );
-                        } else {
-                                for(size_t x=0;x!=b.x_len();++x){
-                                        for(size_t y=0;y!=b.y_len();++y){
-                                                if( b(x,y) == '\0' ){
-                                                        if( (x != b.x_len() -1 && b(x+1,y) != '\0') ||
-                                                            (x != 0            && b(x-1,y) != '\0') ||
-                                                            (y != b.y_len() -1 && b(x,y+1) != '\0') ||
-                                                            (y != 0 && b(x,y-1) != '\0' ) )
-                                                        {
-                                                                initial_moves.emplace_back(x,y);
-                                                        }
-                                                }
-                                        }
-                                }
-                        }
-                        //boost::for_each( initial_moves, [](auto&& _){ std::cout << "\t(" << get<0>(_) << "," << get<1>(_) << ")\n";});
+                        auto initial_moves = find_initial_moves(b);
 
                         enum class direction{
                                 left,
@@ -203,10 +187,6 @@ namespace{
                 std::shared_ptr<dictionary_t> dict_;
         };
 
-        auto make_dict_solver(){
-                return std::make_unique<brute_force_strategy>(
-                        dictionary_factory::get_inst()->make("regular"));
-        }
         int reg_brute_force = ( strategy_factory::get_inst() ->register_( "brute_force", 
                                                                           [](){
                                                                                 return std::make_unique<brute_force_strategy>(

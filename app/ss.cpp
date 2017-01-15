@@ -11,7 +11,7 @@ namespace ss{
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
 
                         auto strat = strategy_factory::get_inst()
-                                ->make("brute_force");
+                                ->make("fast_solver");
 
 
                         std::string board_proto = 

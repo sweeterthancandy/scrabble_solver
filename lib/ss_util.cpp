@@ -103,4 +103,28 @@ namespace ss{
                         }
                 }
         }
+        std::vector<std::tuple<size_t, size_t> > find_initial_moves(board const& b){
+                std::vector<std::tuple<size_t, size_t> > initial_moves;
+
+
+                if( b( b.x_len()/2, b.y_len()/2) == '\0'){
+                        initial_moves.emplace_back( b.x_len()/2, b.y_len()/2 );
+                } else {
+                        for(size_t x=0;x!=b.x_len();++x){
+                                for(size_t y=0;y!=b.y_len();++y){
+                                        if( b(x,y) == '\0' ){
+                                                if( (x != b.x_len() -1 && b(x+1,y) != '\0') ||
+                                                    (x != 0            && b(x-1,y) != '\0') ||
+                                                    (y != b.y_len() -1 && b(x,y+1) != '\0') ||
+                                                    (y != 0 && b(x,y-1) != '\0' ) )
+                                                {
+                                                        initial_moves.emplace_back(x,y);
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                return std::move(initial_moves);
+        }
 }

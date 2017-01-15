@@ -66,7 +66,6 @@ namespace ss{
                 array_t rep_;
         };
 
-
         template<class Impl>
         struct basic_array_rotate_view{
                 using value_type = typename Impl::value_type;
