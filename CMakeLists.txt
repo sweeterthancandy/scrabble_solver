@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_CXX_FLAGS "-ggdb3 -std=c++14")
+set(CMAKE_CXX_FLAGS "-std=c++14")
 
 aux_source_directory(lib sources)
 aux_source_directory(test test_sources)
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 find_package(GTest REQUIRED)
 
