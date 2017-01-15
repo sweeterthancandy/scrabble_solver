@@ -10,8 +10,7 @@ find_package(GTest REQUIRED)
 
 include_directories(include)
 
-add_executable(ss ${sources})
-
+add_executable(ss app/ss.cpp ${sources})
 
 add_executable(ss_test ${sources} ${test_sources})
 
