@@ -1,11 +1,12 @@
 #pragma once
 
-#include <boost/multi_array.hpp>
+#include <cassert>
+#include <algorithm>
+#include <iostream>
+
 #include <boost/range/algorithm.hpp>
 #include <boost/range/algorithm_ext/is_sorted.hpp>
 #include <boost/range/adaptors.hpp>
-#include <algorithm>
-#include <cassert>
 
 #include "ss_generic_factory.h"
 #include "ss_rack.h"
@@ -19,6 +20,11 @@ namespace ss{
 		double_word,
 		tripple_word
 	};
+                
+        enum class array_orientation{
+                horizontal,
+                verital
+        };
 
         /*
          * Want to use a lightweight representation of the board,
@@ -33,10 +39,17 @@ namespace ss{
                         x_len_(x), y_len_(y),
                         rep_(x * y, val)
                 {}
+
+
+
                 auto const& operator()(size_t x, size_t y)const{
+                        assert( x < x_len_ && "out of bound");
+                        assert( y < y_len_ && "out of bound");
                         return rep_.at( x * y_len_ + y);
                 }
                 auto& operator()(size_t x, size_t y){
+                        assert( x < x_len_ && "out of bound");
+                        assert( y < y_len_ && "out of bound");
                         return rep_.at( x * y_len_ + y);
                 }
 		size_t x_len()const{
@@ -44,6 +57,45 @@ namespace ss{
                 }
 		size_t y_len()const{
                         return y_len_;
+                }
+
+
+
+                auto const& operator()(array_orientation orientation, size_t x, size_t y)const{
+                        switch(orientation){
+                        case array_orientation::horizontal:
+                                return this->operator()(x,y);
+                        case array_orientation::verital:
+                                return this->operator()(y,x);
+                        }
+                        __builtin_unreachable();
+                }
+                auto& operator()(array_orientation orientation, size_t x, size_t y){
+                        switch(orientation){
+                        case array_orientation::horizontal:
+                                return this->operator()(x,y);
+                        case array_orientation::verital:
+                                return this->operator()(y,x);
+                        }
+                        __builtin_unreachable();
+                }
+		size_t x_len(array_orientation orientation)const{
+                        switch(orientation){
+                        case array_orientation::horizontal:
+                                return x_len_;
+                        case array_orientation::verital:
+                                return y_len_;
+                        }
+                        __builtin_unreachable();
+                }
+		size_t y_len(array_orientation orientation)const{
+                        switch(orientation){
+                        case array_orientation::horizontal:
+                                return y_len_;
+                        case array_orientation::verital:
+                                return x_len_;
+                        }
+                        __builtin_unreachable();
                 }
                 void fill( T const& val){
                         boost::fill( rep_, val);
@@ -59,6 +111,27 @@ namespace ss{
                                         }
                                 }
                         }
+                }
+
+                void dump(std::ostream& ostr = std::cout)const{
+                        ostr << std::string((*this).x_len() * 3 + 2, '-') << "\n";
+                        for(size_t y=0;y!=(*this).y_len();++y){
+                                ostr << "|";
+                                for(size_t x=0;x!=(*this).x_len();++x){
+                                        auto d = (*this)(x,y);
+
+                                        switch(d){
+                                        case '\0':
+                                                ostr << "   ";
+                                                break;
+                                        default:
+                                                ostr << ' ' << ( std::isgraph(d) ? d : '?' ) << ' ';
+                                        }
+                                }
+                                ostr << "|\n";
+                        }
+                        ostr << std::string((*this).x_len() * 3 + 2, '-') << "\n";
+                        ostr << std::flush;
                 }
         private:
                 size_t x_len_;
