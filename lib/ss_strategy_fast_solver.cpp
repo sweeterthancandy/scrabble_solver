@@ -123,9 +123,6 @@ namespace{
                                 }
                         });
 
-                        auto offset = ba::max(left);
-                        board aux( decl_.size(), ba::max(left) + ba::max(right) + 1);
-
                         struct printer : boost::static_visitor<>{
 
                                 explicit printer(size_t offset, board& b)
@@ -157,12 +154,28 @@ namespace{
                         };
 
 
+                        auto offset = ba::max(left);
+                        board aux( decl_.size(), ba::max(left) + ba::max(right) + 1);
                         printer p{offset, aux};
                         boost::for_each( decl_, boost::apply_visitor(p) );
-
                         aux.dump();
                 }
-                void solve(){
+                void solve(rack const& rck){
+                        /*
+                         * Algorithm
+                         *
+                         * first starting point x \in [0,n], try all combinations
+                         * of words for word in the tiles [y,x]
+                         *
+                         */
+
+                        std::vector<size_t> start_points;
+                        for(size_t x{0};x!=decl_.size();++x){
+                                if( placeholder_t* _ = boost::get<placeholder_t>(&decl_[i])){
+                                        continue;
+                                } else if( 
+                        }
+
                 }
         private:
                 std::vector<meta_tile_t> decl_;
@@ -178,8 +191,8 @@ namespace{
                         decl_.emplace_back(perp_t{std::move(left), std::move(right)});
                 }
                 auto make(){
-                        // XXX maybe clear at the end
                         return move_template{std::move(decl_)};
+                        // XXX maybe clear at the end
                 }
         private:
                 std::vector<meta_tile_t> decl_;
