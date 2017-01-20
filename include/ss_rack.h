@@ -7,6 +7,14 @@
 #include <set>
 
 namespace ss{
+
+
+        /*
+         * This is basically just a std::string,
+         * but this helps keeping the algorithms less
+         * <LeftMouse>
+         *
+         */
         struct rack{
                 rack()=default;
                 explicit rack(std::vector<tile_t>& tiles);

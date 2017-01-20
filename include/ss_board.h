@@ -23,7 +23,7 @@ namespace ss{
                 
         enum class array_orientation{
                 horizontal,
-                verital
+                vertical
         };
 
         /*
@@ -39,6 +39,18 @@ namespace ss{
                         x_len_(x), y_len_(y),
                         rep_(x * y, val)
                 {}
+                basic_array(basic_array const& that, array_orientation orientation = array_orientation::horizontal):
+                        x_len_(that.x_len_), y_len_(that.y_len_)
+                        ,rep_(x_len_ * y_len_)
+                {
+                        for(size_t x=0;x!=x_len_;++x){
+                                for(size_t y=0;y!=y_len_;++y){
+                                        (*this)(x,y) = that(orientation,x,y);
+                                }
+                        }
+                }
+
+
 
 
 
@@ -65,7 +77,7 @@ namespace ss{
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return this->operator()(x,y);
-                        case array_orientation::verital:
+                        case array_orientation::vertical:
                                 return this->operator()(y,x);
                         }
                         __builtin_unreachable();
@@ -74,7 +86,7 @@ namespace ss{
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return this->operator()(x,y);
-                        case array_orientation::verital:
+                        case array_orientation::vertical:
                                 return this->operator()(y,x);
                         }
                         __builtin_unreachable();
@@ -83,7 +95,7 @@ namespace ss{
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return x_len_;
-                        case array_orientation::verital:
+                        case array_orientation::vertical:
                                 return y_len_;
                         }
                         __builtin_unreachable();
@@ -92,7 +104,7 @@ namespace ss{
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return y_len_;
-                        case array_orientation::verital:
+                        case array_orientation::vertical:
                                 return x_len_;
                         }
                         __builtin_unreachable();
