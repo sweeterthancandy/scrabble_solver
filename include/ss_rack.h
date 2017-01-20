@@ -8,6 +8,7 @@
 
 namespace ss{
         struct rack{
+                rack()=default;
                 explicit rack(std::vector<tile_t>& tiles);
                 explicit rack(std::string const& s);
                 rack clone_remove_tile(tile_t t)const;
