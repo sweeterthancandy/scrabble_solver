@@ -160,7 +160,7 @@ namespace{
                         boost::for_each( decl_, boost::apply_visitor(p) );
                         aux.dump();
                 }
-                void solve(rack const& rck){
+                void solve(rack const& start_rck){
                         /*
                          * Algorithm
                          *
@@ -169,12 +169,20 @@ namespace{
                          *
                          */
 
-                        std::vector<size_t> start_points;
-                        for(size_t x{0};x!=decl_.size();++x){
-                                if( placeholder_t* _ = boost::get<placeholder_t>(&decl_[i])){
-                                        continue;
-                                } else if( 
-                        }
+                        //std::vector<size_t> start_points;
+                        //for(size_t x{0};x!=decl_.size();++x){
+                                //std::vector< std::tuple<std::string, rack> > stack;
+                                //stack.emplace_back( std::forward_as_tuple( "", start_rck) );
+
+                                //for(; stack.size(); ){
+                                        //std::string tiles;
+                                        //rack rck;
+                                        //std::tie(tiles,rck) = std::move(stack.back());
+                                        //stack.pop_back();
+
+
+                                //}
+                        //}
 
                 }
         private:
@@ -248,12 +256,14 @@ namespace{
 
                         this->solve_(hor, rck);
 
+                        #if 0
                         std::cout << "BEGIN\n";
                         boost::copy(hor, std::ostream_iterator<std::string>(std::cout, "\n"));
                         std::cout << "END\n";
                         std::cout << "BEGIN\n";
                         boost::copy(vert, std::ostream_iterator<std::string>(std::cout, "\n"));
                         std::cout << "END\n";
+                        #endif
 
                         return skip_go{};
                 }
