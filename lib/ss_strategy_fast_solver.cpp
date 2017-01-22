@@ -48,13 +48,27 @@ namespace{
                 explicit fast_solver(std::shared_ptr<dictionary_t> dict):
                         dict_(std::move(dict))
                 {}
-                void solve_(board const& b, std::vector<std::string> const& lines, rack const& rck){
-                        assert( ! lines.size() && "precondition failed");
+                void solve_(board const& b, std::vector<std::string> const& board_lines, rack const& rck){
+                        assert( ! board_lines.size() && "precondition failed");
                         using std::get;
-                        size_t width = lines.front().size();
-                        for(size_t i=0;i!=lines.size();++i){
+                        size_t width = board_lines.front().size();
+                        for(size_t i=0;i!=board_lines.size();++i){
 
-                                std::string line = lines[i];
+                                std::string current_line = board_lines[i];
+
+                                do{
+                                        std::string aux;
+                                        boost::for_each( current_line, [&aux](char c){ 
+                                                switch(c){
+                                                case '\0':
+                                                       c = ' ';
+                                                       break;
+                                                }
+                                                aux += c;
+                                        });
+                                        std::cout << "current_line = " << aux << "\n";
+                                }while(0);
+
 
                                 std::vector<std::tuple<int, int, std::string, std::string> > moves;
 
@@ -67,29 +81,27 @@ namespace{
                                 };
                                 int sigma = 0;
 
-                                PRINT(line);
-
                                 for(size_t j=0;j!=width;++j){
-                                        if( line[j] != '\0')
+                                        if( current_line[j] != '\0')
                                                 continue;
                                         // this is a possible move
                                         std::string left;
                                         std::string right;
                                         for(size_t k=i;k!=0;){
                                                 --k;
-                                                if( lines[k][j] == '\0'){
+                                                if( board_lines[k][j] == '\0'){
                                                         break;
                                                 }
-                                                left += lines[k][j];
+                                                left += board_lines[k][j];
                                         }
                                         for(size_t k=i+1;k < width;++k){
-                                                if( lines[k][j] == '\0'){
+                                                if( board_lines[k][j] == '\0'){
                                                         break;
                                                 }
-                                                right += lines[k][j];
+                                                right += board_lines[k][j];
                                         }
-                                        int is_start = ( j     != 0           && line[j-1] != '\0' ) ||
-                                                       ( j + 1 != line.size() && line[j+1] != '\0' ) ||
+                                        int is_start = ( j     != 0           && current_line[j-1] != '\0' ) ||
+                                                       ( j + 1 != current_line.size() && current_line[j+1] != '\0' ) ||
                                                        left.size() || 
                                                        right.size();
 
@@ -100,44 +112,89 @@ namespace{
                                 }
                                 sum.emplace_back(sigma);
                                         
-                                PRINT(moves.size());
-
                                 std::vector<std::vector<int> > start_stack;
                                 for(size_t n=1;n <= std::max/**/(rck.size(),3ul);++n){
-                                        auto cpy{b};
-                                        int count{0};
-                                        for(auto&& _ : moves){
-                                                cpy( get<Ele_Idx>(_), 0 ) = boost::lexical_cast<char>(count % 10 );
-                                                cpy( get<Ele_Idx>(_), 1 ) = boost::lexical_cast<char>(sum[count] % 10);
-                                                ++count;
-                                        }
-                                        std::vector<int> start;
-
                                         PRINT(n);
-                                        PRINT(moves.size());
+                                        //auto cpy{b};
+                                        //int count{0};
+                                        //for(auto&& _ : moves){
+                                                //cpy( get<Ele_Idx>(_), 0 ) = boost::lexical_cast<char>(count % 10 );
+                                                //cpy( get<Ele_Idx>(_), 1 ) = boost::lexical_cast<char>(sum[count] % 10);
+                                                //++count;
+                                        //}
+                                        std::vector<int> start_vec;
+
                                         for(size_t j=0;j + n <= moves.size(); ++j){
                                                 auto diff = sum[j+n] - sum[j];
-                                                cpy( get<Ele_Idx>(moves[j]), 2 ) = boost::lexical_cast<char>(diff % 10);
+                                                //cpy( get<Ele_Idx>(moves[j]), 2 ) = boost::lexical_cast<char>(diff % 10);
                                                 if(diff){
-                                                        start.push_back(j);
+                                                        start_vec.push_back(j);
                                                         //for(size_t k=0;k!=n;++k){
                                                         size_t m = get<Ele_Idx>(moves[j]);
-                                                        cpy( m, i) = 'X';
+                                                        //cpy( m, i) = 'X';
                                                         //}
                                                 }
                                         }
-                                        if( start.empty() )
+                                        if( start_vec.empty() )
                                                 break;
-                                        dump(std::cout, start);
-                                        cpy.dump();
+                                        dump(std::cout, start_vec);
+                                        //cpy.dump();
 
-                                        start_stack.emplace_back(std::move(start));
+
+
+                                        for( auto&& start : start_vec ){
+                                                std::string prefix;
+                                                for( size_t j= get<Ele_Idx>(moves[start]); j != 0; ){
+                                                        --j;
+                                                        if( current_line[j] == '\0')
+                                                                break;
+                                                        prefix += current_line[j];
+                                                }
+                                                prefix = std::string(prefix.rbegin(), prefix.rend());
+                                                PRINT(prefix);
+
+                                                std::vector<std::tuple<std::string, rack> > stack;
+                                                stack.emplace_back( "", rck);
+                                                enum{
+                                                        Item_Suffix,
+                                                        Item_Rack
+                                                };
+
+                                                for(; stack.size();){
+                                                        auto item = stack.back();
+                                                        stack.pop_back();
+
+                                                        if( get<Item_Suffix>(item).size() == n ){
+                                                                auto word = prefix;
+                                                                auto cand = get<Item_Suffix>(item);
+                                                                PRINT_SEQ( (word)(cand) );
+                                                                
+                                                        } else{
+                                                                for( auto t : get<Item_Rack>(item).make_tile_set() ){
+                                                                        stack.emplace_back(
+                                                                                get<Item_Suffix>(item) + t,
+                                                                                rck.clone_remove_tile(t));
+                                                                }
+                                                        }
+                                                }
+                                        }
+
+                                        if( n == 2 )
+                                                return;
+
+
+                                        start_stack.emplace_back(std::move(start_vec));
                                 }
+
+                                PRINT(start_stack.size());
 
                                 size_t n=1;
                                 for( auto&& vec : start_stack ){
                                 }
 
+                                //// break after first non trival loop
+                                //if( start_stack.size() )
+                                        //break;
                         }
                 }
                 player_move solve(board const& b, rack const& rck){
@@ -145,17 +202,15 @@ namespace{
                         auto vert = detail::string_cache_lines(array_orientation::vertical, b);
 
                         this->solve_(b, hor, rck);
-                        board vb{b, array_orientation::vertical};
-                        this->solve_(vb, vert, rck);
+                        //board vb{b, array_orientation::vertical};
+                        //this->solve_(vb, vert, rck);
 
-                        #if 0
-                        std::cout << "BEGIN\n";
-                        boost::copy(hor, std::ostream_iterator<std::string>(std::cout, "\n"));
-                        std::cout << "END\n";
-                        std::cout << "BEGIN\n";
-                        boost::copy(vert, std::ostream_iterator<std::string>(std::cout, "\n"));
-                        std::cout << "END\n";
-                        #endif
+                        //std::cout << "BEGIN\n";
+                        //boost::copy(hor, std::ostream_iterator<std::string>(std::cout, "\n"));
+                        //std::cout << "END\n";
+                        //std::cout << "BEGIN\n";
+                        //boost::copy(vert, std::ostream_iterator<std::string>(std::cout, "\n"));
+                        //std::cout << "END\n";
 
                         return skip_go{};
                 }
