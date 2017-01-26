@@ -17,6 +17,7 @@
 // this represents the possible
 
 namespace{
+        using std::get;
         template<class T, class = std::__void_t< decltype( std::declval<T>().begin() ) > >
         inline std::ostream& dump(std::ostream& ostr, T const& con){
                 ostr << "{";
@@ -45,15 +46,29 @@ namespace{
         }
 
         struct fast_solver : strategy{
+                typedef std::tuple<
+                        size_t, 
+                        size_t,
+                        std::string
+                > candidate_move;
+                enum{
+                        Cand_X,
+                        Cand_Y,
+                        Cand_Word
+                };
+
                 explicit fast_solver(std::shared_ptr<dictionary_t> dict):
                         dict_(std::move(dict))
                 {}
-                void solve_(board const& b, std::vector<std::string> const& board_lines, rack const& rck){
+                template<class F>
+                void solve_(board const& b, std::vector<std::string> const& board_lines, rack const& rck, F f){
                         assert( board_lines.size() && "precondition failed");
-                        using std::get;
                         size_t width = board_lines.front().size();
                         auto dict = dictionary_factory::get_inst()->make("regular");
                         for(size_t i=0;i!=board_lines.size();++i){
+                        //for(size_t i=4; i!=5; ++i){
+
+                                std::cout << "\n\n";
 
                                 std::string current_line = board_lines[i];
 
@@ -115,6 +130,8 @@ namespace{
                                         
                                 std::vector<std::vector<int> > start_stack;
                                 for(size_t n=1;n <= std::max/**/(rck.size(),3ul);++n){
+
+                                        std::cout << "XXX\n";
                                         //PRINT(n);
                                         //auto cpy{b};
                                         //int count{0};
@@ -136,6 +153,7 @@ namespace{
                                                         //}
                                                 }
                                         }
+                                        dump(std::cout, start_vec);
                                         if( start_vec.empty() )
                                                 break;
                                         //dump(std::cout, start_vec);
@@ -153,13 +171,12 @@ namespace{
                                                         prefix += current_line[j];
                                                 }
                                                 prefix = std::string(prefix.rbegin(), prefix.rend());
-                                                //PRINT(prefix);
 
 
                                                 std::vector<std::tuple<std::string, size_t, rack> > stack;
-                                                stack.emplace_back( "", start, rck);
+                                                stack.emplace_back( std::move(prefix), start, rck);
                                                 enum{
-                                                        Item_Suffix,
+                                                        Item_Word,
                                                         Item_MoveIdx,
                                                         Item_Rack
                                                 };
@@ -173,14 +190,15 @@ namespace{
                                                         auto current_idx {get<Item_MoveIdx>(item)};
                                                         if( current_idx - start == n ){
                                                                 // terminal
-                                                                auto word = prefix;
-                                                                word += get<Item_Suffix>(item);
+                                                                auto word = get<Item_Word>(item);
 
-                                                                if( boost::binary_search( *dict, word )){
-                                                                        PRINT_SEQ((i)(n)(start)(word));
+                                                                bool ret = boost::binary_search( *dict, word );
+
+                                                                PRINT_SEQ((ret)(i)(n)(start)(word));
+
+                                                                if( ret ){
+                                                                        f(start, i, word);
                                                                 }
-
-
                                                                 
                                                         } else{
                                                                 // else, yeild all other possible states
@@ -199,26 +217,25 @@ namespace{
                                                                             cpy_start!=cpy_end;
                                                                             ++cpy_start)
                                                                         {
-                                                                                get<Item_Suffix>(item) += current_line[cpy_start];
+                                                                                get<Item_Word>(item) += current_line[cpy_start];
                                                                         }
                                                                 }
 
                                                                 for( auto t : current_rack.make_tile_set() ){
 
                                                                         if( current_move_suffix.size() || current_move_prefix.size() ){
-                                                                                auto tmp{current_move_suffix};
-                                                                                tmp += t;
-                                                                                tmp += current_move_suffix;
-                                                                                if( ! boost::binary_search( *dict, tmp ) ){
+                                                                                auto perp_word{current_move_prefix};
+                                                                                perp_word += t;
+                                                                                perp_word += current_move_suffix;
+                                                                                bool ret = boost::binary_search( *dict, perp_word );
+                                                                                PRINT_SEQ((ret)(perp_word));
+                                                                                if( ! ret ){
                                                                                         continue;
                                                                                 }
                                                                         }
 
-
-                                                                        // any constractions?
-
                                                                         stack.emplace_back(
-                                                                                get<Item_Suffix>(item) + t,
+                                                                                get<Item_Word>(item) + t,
                                                                                 get<Item_MoveIdx>(item)+1,
                                                                                 current_rack.clone_remove_tile(t));
                                                                 }
@@ -248,8 +265,33 @@ namespace{
                         auto hor = detail::string_cache_lines(array_orientation::horizontal, b);
                         auto vert = detail::string_cache_lines(array_orientation::vertical, b);
 
-                        this->solve_(b, hor, rck);
-                        //board vb{b, array_orientation::vertical};
+
+                        std::vector<candidate_move> hor_cand;
+                        this->solve_(b, hor, rck, [&hor_cand](size_t x, size_t y, std::string word){
+                                hor_cand.emplace_back(x,y,std::move(word));
+                        });
+                        boost::sort( hor_cand, [](auto&& l, auto&& r){
+                                return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
+                        });
+                        for( auto best : hor_cand ){
+                                auto cpy{b};
+                                cpy.dump();
+                                auto x = get<Cand_X>(best);
+                                auto y = get<Cand_Y>(best);
+                                for( auto c : get<Cand_Word>(best)){
+                                        #if 0
+                                        for(;;++x){
+                                                if( cpy(x,y) == '\0')
+                                                        break;
+                                        }
+                                        #endif
+                                        cpy(x,y) = c;
+                                        ++x;
+                                }
+                                cpy.dump();
+                                PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
+                        }
+                        //board vb{cpy, array_orientation::vertical};
                         //this->solve_(vb, vert, rck);
 
                         //std::cout << "BEGIN\n";

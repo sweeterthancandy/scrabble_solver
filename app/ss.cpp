@@ -51,7 +51,7 @@ namespace ss{
                           /*15*/"               "
                         ;
 
-                        std::string rck_str = "AUEVNWA";
+                        std::string rck_str = "SHACKLE";
                         rack rck(rck_str);
                         read_board_from_string(board, board_str);
                         r->render(board);
