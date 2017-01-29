@@ -77,9 +77,9 @@ namespace{
                         auto dict = dictionary_factory::get_inst()->make("regular");
 
                         
-                        //for(size_t i=0;i!=board_lines.size();++i){
+                        for(size_t i=0;i!=board_lines.size();++i){
                         //for(size_t i=4; i!=5; ++i){
-                        for( size_t i : {12} ){
+                        //for( size_t i : {12} ){
 
                                 std::cout << "\n\n";
 
@@ -146,7 +146,8 @@ namespace{
                                 }
                                 sum.emplace_back(sigma);
                                         
-                                for(size_t n=1;n <= std::min/**/(rck.size(),2ul);++n){
+                                //for(size_t n=1;n <= std::min/**/(rck.size(),2ul);++n){
+                                for(size_t n=1;n <= rck.size();++n){
 
                                         std::cout << "XXX\n";
                                         std::vector<int> start_vec;
@@ -211,6 +212,7 @@ namespace{
                                                                 auto const& current_move{moves.at(current_idx)};
                                                                 std::string current_move_suffix{get<Ele_Left>(current_move)};
                                                                 std::string current_move_prefix{get<Ele_Right>(current_move)};
+                                                                std::string suffix;
 
                                                                 PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
@@ -223,7 +225,7 @@ namespace{
                                                                             cpy_start!=cpy_end;
                                                                             ++cpy_start)
                                                                         {
-                                                                                get<Item_Word>(item) += current_line[cpy_start];
+                                                                                suffix += current_line[cpy_start];
                                                                         }
                                                                 }
 
@@ -241,7 +243,7 @@ namespace{
                                                                         }
 
                                                                         stack.emplace_back(
-                                                                                get<Item_Word>(item) + t,
+                                                                                get<Item_Word>(item) + t + suffix,
                                                                                 get<Item_MoveIdx>(item)+1,
                                                                                 current_rack.clone_remove_tile(t));
                                                                 }
@@ -249,7 +251,6 @@ namespace{
                                                 }
                                         }
                                 }
-
                         }
                 }
                 player_move solve(board const& b, rack const& rck){
