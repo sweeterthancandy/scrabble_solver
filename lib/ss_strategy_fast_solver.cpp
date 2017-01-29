@@ -60,13 +60,26 @@ namespace{
                 explicit fast_solver(std::shared_ptr<dictionary_t> dict):
                         dict_(std::move(dict))
                 {}
+                /*
+                 This function yeilds the result, by doing the algorithm
+                        
+                        for every line
+                                for all n in 0..|rack|
+                                        find the possible sequence T = {t0,t1,..tn}
+                                                find all possible words
+                 */
                 template<class F>
                 void solve_(board const& b, std::vector<std::string> const& board_lines, rack const& rck, F f){
+
                         assert( board_lines.size() && "precondition failed");
+
                         size_t width = board_lines.front().size();
                         auto dict = dictionary_factory::get_inst()->make("regular");
-                        for(size_t i=0;i!=board_lines.size();++i){
+
+                        
+                        //for(size_t i=0;i!=board_lines.size();++i){
                         //for(size_t i=4; i!=5; ++i){
+                        for( size_t i : {12} ){
 
                                 std::cout << "\n\n";
 
@@ -86,15 +99,20 @@ namespace{
                                 }while(0);
 
 
-                                std::vector<std::tuple<int, int, std::string, std::string> > moves;
+                                /*
+                                Need to cache the sequence of moves, which is nice because it is just the 
+                                sequence of empty tiles
 
-                                std::vector<int> sum;
+                                Also cache an auxiallar sum, so I can tell is a subsequence is a valid move
+                                 */
+                                std::vector<std::tuple<int, int, std::string, std::string> > moves;
                                 enum{
                                         Ele_Idx,
                                         Ele_Start,
                                         Ele_Left,
                                         Ele_Right
                                 };
+                                std::vector<int> sum;
                                 int sigma = 0;
 
                                 for(size_t j=0;j!=width;++j){
@@ -128,29 +146,15 @@ namespace{
                                 }
                                 sum.emplace_back(sigma);
                                         
-                                std::vector<std::vector<int> > start_stack;
-                                for(size_t n=1;n <= std::max/**/(rck.size(),3ul);++n){
+                                for(size_t n=1;n <= std::min/**/(rck.size(),2ul);++n){
 
                                         std::cout << "XXX\n";
-                                        //PRINT(n);
-                                        //auto cpy{b};
-                                        //int count{0};
-                                        //for(auto&& _ : moves){
-                                                //cpy( get<Ele_Idx>(_), 0 ) = boost::lexical_cast<char>(count % 10 );
-                                                //cpy( get<Ele_Idx>(_), 1 ) = boost::lexical_cast<char>(sum[count] % 10);
-                                                //++count;
-                                        //}
                                         std::vector<int> start_vec;
 
                                         for(size_t j=0;j + n <= moves.size(); ++j){
                                                 auto diff = sum[j+n] - sum[j];
-                                                //cpy( get<Ele_Idx>(moves[j]), 2 ) = boost::lexical_cast<char>(diff % 10);
                                                 if(diff){
                                                         start_vec.push_back(j);
-                                                        //for(size_t k=0;k!=n;++k){
-                                                        size_t m = get<Ele_Idx>(moves[j]);
-                                                        //cpy( m, i) = 'X';
-                                                        //}
                                                 }
                                         }
                                         dump(std::cout, start_vec);
@@ -174,18 +178,18 @@ namespace{
 
 
                                                 std::vector<std::tuple<std::string, size_t, rack> > stack;
-                                                stack.emplace_back( std::move(prefix), start, rck);
                                                 enum{
                                                         Item_Word,
                                                         Item_MoveIdx,
                                                         Item_Rack
                                                 };
+                                                stack.emplace_back( std::move(prefix), start, rck);
                                                 for(; stack.size();){
                                                         auto item = stack.back();
                                                         stack.pop_back();
                                                                 
 
-                                                        //PRINT_SEQ((current_move_suffix)(current_move_prefix));
+                                                        PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
                                                         auto current_idx {get<Item_MoveIdx>(item)};
                                                         if( current_idx - start == n ){
@@ -207,6 +211,8 @@ namespace{
                                                                 auto const& current_move{moves.at(current_idx)};
                                                                 std::string current_move_suffix{get<Ele_Left>(current_move)};
                                                                 std::string current_move_prefix{get<Ele_Right>(current_move)};
+
+                                                                PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
                                                                 if( current_idx + 1 < moves.size() ){
 
@@ -242,23 +248,8 @@ namespace{
                                                         }
                                                 }
                                         }
-
-                                        //if( n == 2 )
-                                                //return;
-
-
-                                        start_stack.emplace_back(std::move(start_vec));
                                 }
 
-                                //PRINT(start_stack.size());
-
-                                size_t n=1;
-                                for( auto&& vec : start_stack ){
-                                }
-
-                                //// break after first non trival loop
-                                //if( start_stack.size() )
-                                        //break;
                         }
                 }
                 player_move solve(board const& b, rack const& rck){
@@ -279,12 +270,6 @@ namespace{
                                 auto x = get<Cand_X>(best);
                                 auto y = get<Cand_Y>(best);
                                 for( auto c : get<Cand_Word>(best)){
-                                        #if 0
-                                        for(;;++x){
-                                                if( cpy(x,y) == '\0')
-                                                        break;
-                                        }
-                                        #endif
                                         cpy(x,y) = c;
                                         ++x;
                                 }

@@ -38,4 +38,10 @@ namespace ss{
                 return std::move(tmp);
         }
         size_t rack::size()const{return tiles_.size();}
+
+
+        std::ostream& operator<<(std::ostream& ostr, rack const& self){
+                boost::copy( self.tiles_, std::ostream_iterator<tile_t>(ostr << "{", ","));
+                return ostr << "}";
+        }
 }

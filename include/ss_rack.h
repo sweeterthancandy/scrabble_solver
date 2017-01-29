@@ -32,6 +32,7 @@ namespace ss{
 		decltype(auto) end(){return tiles_.end(); }
 		decltype(auto) cbegin()const{return tiles_.begin(); }
 		decltype(auto) cend()const{return tiles_.end(); }
+                friend std::ostream& operator<<(std::ostream& ostr, rack const& self);
         private:
                 std::vector<tile_t> tiles_;
         };
