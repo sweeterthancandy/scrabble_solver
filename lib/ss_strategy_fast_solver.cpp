@@ -79,7 +79,7 @@ namespace{
                         
                         for(size_t i=0;i!=board_lines.size();++i){
                         //for(size_t i=4; i!=5; ++i){
-                        //for( size_t i : {12} ){
+                        //for( size_t i : {4} ){
 
                                 std::cout << "\n\n";
 
@@ -158,7 +158,7 @@ namespace{
                                                         start_vec.push_back(j);
                                                 }
                                         }
-                                        dump(std::cout, start_vec);
+                                        //dump(std::cout, start_vec);
                                         if( start_vec.empty() )
                                                 break;
                                         //dump(std::cout, start_vec);
@@ -190,7 +190,7 @@ namespace{
                                                         stack.pop_back();
                                                                 
 
-                                                        PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
+                                                        //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
                                                         auto current_idx {get<Item_MoveIdx>(item)};
                                                         if( current_idx - start == n ){
@@ -199,7 +199,7 @@ namespace{
 
                                                                 bool ret = boost::binary_search( *dict, word );
 
-                                                                PRINT_SEQ((ret)(i)(n)(start)(word));
+                                                                //PRINT_SEQ((ret)(i)(n)(start)(word));
 
                                                                 if( ret ){
                                                                         f(start, i, word);
@@ -210,11 +210,11 @@ namespace{
                                                                 
                                                                 auto current_rack{get<Item_Rack>(item)};
                                                                 auto const& current_move{moves.at(current_idx)};
-                                                                std::string current_move_suffix{get<Ele_Left>(current_move)};
-                                                                std::string current_move_prefix{get<Ele_Right>(current_move)};
+                                                                std::string current_move_suffix{get<Ele_Right>(current_move)};
+                                                                std::string current_move_prefix{get<Ele_Left>(current_move)};
                                                                 std::string suffix;
 
-                                                                PRINT_SEQ((current_move_prefix)(current_move_suffix));
+                                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
                                                                 if( current_idx + 1 < moves.size() ){
 
@@ -236,7 +236,7 @@ namespace{
                                                                                 perp_word += t;
                                                                                 perp_word += current_move_suffix;
                                                                                 bool ret = boost::binary_search( *dict, perp_word );
-                                                                                PRINT_SEQ((ret)(perp_word));
+                                                                                //PRINT_SEQ((ret)(perp_word));
                                                                                 if( ! ret ){
                                                                                         continue;
                                                                                 }
