@@ -81,10 +81,11 @@ namespace{
                         //for(size_t i=4; i!=5; ++i){
                         //for( size_t i : {4} ){
 
-                                std::cout << "\n\n";
+                                //std::cout << "\n\n";
 
                                 std::string current_line = board_lines[i];
 
+                                #if 0
                                 do{
                                         std::string aux;
                                         boost::for_each( current_line, [&aux](char c){ 
@@ -97,6 +98,7 @@ namespace{
                                         });
                                         std::cout << "current_line = " << aux << "\n";
                                 }while(0);
+                                #endif
 
 
                                 /*
@@ -149,7 +151,6 @@ namespace{
                                 //for(size_t n=1;n <= std::min/**/(rck.size(),2ul);++n){
                                 for(size_t n=1;n <= rck.size();++n){
 
-                                        std::cout << "XXX\n";
                                         std::vector<int> start_vec;
 
                                         for(size_t j=0;j + n <= moves.size(); ++j){
@@ -265,7 +266,7 @@ namespace{
                         boost::sort( hor_cand, [](auto&& l, auto&& r){
                                 return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
                         });
-                        for( auto best : hor_cand ){
+                        auto p = [&b](auto&& best){
                                 auto cpy{b};
                                 cpy.dump();
                                 auto x = get<Cand_X>(best);
@@ -276,7 +277,10 @@ namespace{
                                 }
                                 cpy.dump();
                                 PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
-                        }
+                        };
+
+                        p(hor_cand.back());
+
                         //board vb{cpy, array_orientation::vertical};
                         //this->solve_(vb, vert, rck);
 
