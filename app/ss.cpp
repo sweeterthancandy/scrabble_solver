@@ -65,7 +65,42 @@ namespace ss{
                                         std::cout << "    " << _ << "\n";
                                 });
                         } else {
-                                auto move = strat->solve( board, rck);
+                                typedef std::tuple<
+                                        array_orientation,
+                                        size_t, 
+                                        size_t,
+                                        std::string
+                                > candidate_move;
+                                enum{
+                                        Cand_Orientation,
+                                        Cand_X,
+                                        Cand_Y,
+                                        Cand_Word
+                                };
+                                std::vector<candidate_move> cands;
+                                strat->yeild( board, rck, *dict,
+                                              [&](array_orientation orientation,
+                                                  size_t x, size_t y,
+                                                  std::string const& word){
+                                        cands.emplace_back(orientation, x, y, word);
+                                });
+                                boost::sort( cands, [](auto&& l, auto&& r){
+                                        return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
+                                });
+                                auto p = [&](auto&& best){
+                                        auto cpy{board};
+                                        cpy.dump();
+                                        auto x = get<Cand_X>(best);
+                                        auto y = get<Cand_Y>(best);
+                                        for( auto c : get<Cand_Word>(best)){
+                                                cpy(x,y) = c;
+                                                ++x;
+                                        }
+                                        cpy.dump();
+                                        PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
+                                };
+
+                                p(cands.back());
                         }
 
 

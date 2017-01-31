@@ -46,20 +46,7 @@ namespace{
         }
 
         struct fast_solver : strategy{
-                typedef std::tuple<
-                        size_t, 
-                        size_t,
-                        std::string
-                > candidate_move;
-                enum{
-                        Cand_X,
-                        Cand_Y,
-                        Cand_Word
-                };
 
-                explicit fast_solver(std::shared_ptr<dictionary_t> dict):
-                        dict_(std::move(dict))
-                {}
                 /*
                  This function yeilds the result, by doing the algorithm
                         
@@ -69,12 +56,12 @@ namespace{
                                                 find all possible words
                  */
                 template<class F>
-                void solve_(board const& b, std::vector<std::string> const& board_lines, rack const& rck, F f){
+                void solve_(std::vector<std::string> const& board_lines, rack const& rck, dictionary_t const& dict, F f)
+		{
 
                         assert( board_lines.size() && "precondition failed");
 
                         size_t width = board_lines.front().size();
-                        auto dict = dictionary_factory::get_inst()->make("regular");
 
                         
                         for(size_t i=0;i!=board_lines.size();++i){
@@ -84,22 +71,6 @@ namespace{
                                 //std::cout << "\n\n";
 
                                 std::string current_line = board_lines[i];
-
-                                #if 0
-                                do{
-                                        std::string aux;
-                                        boost::for_each( current_line, [&aux](char c){ 
-                                                switch(c){
-                                                case '\0':
-                                                       c = ' ';
-                                                       break;
-                                                }
-                                                aux += c;
-                                        });
-                                        std::cout << "current_line = " << aux << "\n";
-                                }while(0);
-                                #endif
-
 
                                 /*
                                 Need to cache the sequence of moves, which is nice because it is just the 
@@ -198,7 +169,7 @@ namespace{
                                                                 // terminal
                                                                 auto word = get<Item_Word>(item);
 
-                                                                bool ret = boost::binary_search( *dict, word );
+                                                                bool ret = boost::binary_search( dict, word );
 
                                                                 //PRINT_SEQ((ret)(i)(n)(start)(word));
 
@@ -236,7 +207,7 @@ namespace{
                                                                                 auto perp_word{current_move_prefix};
                                                                                 perp_word += t;
                                                                                 perp_word += current_move_suffix;
-                                                                                bool ret = boost::binary_search( *dict, perp_word );
+                                                                                bool ret = boost::binary_search( dict, perp_word );
                                                                                 //PRINT_SEQ((ret)(perp_word));
                                                                                 if( ! ret ){
                                                                                         continue;
@@ -254,16 +225,18 @@ namespace{
                                 }
                         }
                 }
-                player_move solve(board const& b, rack const& rck){
-                        auto hor = detail::string_cache_lines(array_orientation::horizontal, b);
-                        auto vert = detail::string_cache_lines(array_orientation::vertical, b);
+                void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
 
+                        for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
 
-                        std::vector<candidate_move> hor_cand;
-                        this->solve_(b, hor, rck, [&hor_cand](size_t x, size_t y, std::string word){
-                                hor_cand.emplace_back(x,y,std::move(word));
-                        });
-                        boost::sort( hor_cand, [](auto&& l, auto&& r){
+                                auto cache = detail::string_cache_lines(orientation, board);
+
+                                this->solve_(cache, r, dict, [&](size_t x, size_t y, std::string const& word){
+                                             callback(orientation, x, y, word);
+                                });
+                        }
+                        #ifdef DKFJKDJF
+                        boost::sort( cands, [](auto&& l, auto&& r){
                                 return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
                         });
                         auto p = [&b](auto&& best){
@@ -279,21 +252,11 @@ namespace{
                                 PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
                         };
 
-                        p(hor_cand.back());
+                        p(cands.back());
+                        #endif
 
-                        //board vb{cpy, array_orientation::vertical};
-                        //this->solve_(vb, vert, rck);
-
-                        //std::cout << "BEGIN\n";
-                        //boost::copy(hor, std::ostream_iterator<std::string>(std::cout, "\n"));
-                        //std::cout << "END\n";
-                        //std::cout << "BEGIN\n";
-                        //boost::copy(vert, std::ostream_iterator<std::string>(std::cout, "\n"));
-                        //std::cout << "END\n";
-
-                        return skip_go{};
                 }
-                std::shared_ptr<strategy> clone(){
+                std::shared_ptr<strategy> clone()override{
                         return std::make_shared<fast_solver>(dict_);
                 }
         private:
@@ -303,8 +266,7 @@ namespace{
         
         int reg_brute_force = ( strategy_factory::get_inst() ->register_( "fast_solver", 
                                                                           [](){
-                                                                                return std::make_unique<fast_solver>(
-                                                                                        dictionary_factory::get_inst()->make("regular"));
+                                                                                return std::make_unique<fast_solver>();
                                                                           }
                                                                           ), 0 );
 
