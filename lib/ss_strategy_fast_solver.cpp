@@ -12,6 +12,8 @@
 #include <boost/accumulators/statistics.hpp>
 #include <boost/variant.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm.hpp>
 
 
 // this represents the possible
@@ -45,6 +47,10 @@ namespace{
                 }
         }
 
+        /*
+         * It's important to do this in stages rather than one long computation,
+         * for easy debugging, ie, can buffer several staging into something pretty
+         */
         struct fast_solver : strategy{
 
                 /*
@@ -60,15 +66,21 @@ namespace{
 		{
 
                         assert( board_lines.size() && "precondition failed");
+                        
+                        do{
+                                std::string aux;
+                                aux += "board_lines\n";
+                                boost::for_each( board_lines, [&](auto&& line){
+                                        aux += line + "\n";
+                                });
+                                aux += "END\n";
+                                boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
+                                std::cout << aux;
+                        }while(0);
 
                         size_t width = board_lines.front().size();
 
-                        
                         for(size_t i=0;i!=board_lines.size();++i){
-                        //for(size_t i=4; i!=5; ++i){
-                        //for( size_t i : {4} ){
-
-                                //std::cout << "\n\n";
 
                                 std::string current_line = board_lines[i];
 
@@ -87,6 +99,32 @@ namespace{
                                 };
                                 std::vector<int> sum;
                                 int sigma = 0;
+
+                                do{
+                                        std::string aux;
+                                        aux += "current_line\n";
+                                        if( i == 0 ){
+                                                aux += '|' + std::string(width, '-');
+                                        } else {
+                                                aux += '|' + board_lines[i-1];
+                                        }
+                                        aux += "\n";
+                                        aux += '|' + board_lines[i];
+                                        aux += "\n";
+                                        if( i + 1 == board_lines.size() ){
+                                                aux += '|' + std::string(width, '-');
+                                        } else {
+                                                aux += '|' + board_lines[i+1];
+                                        }
+                                        aux += "\n";
+                                        #if 0
+                                        aux += std::string( j + 1,' ');
+                                        aux += "^\n";
+                                        #endif
+                                        aux += "END\n";
+                                        boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
+                                        std::cout << aux;
+                                }while(0);
 
                                 for(size_t j=0;j!=width;++j){
                                         if( current_line[j] != '\0')
@@ -118,8 +156,7 @@ namespace{
                                         sigma += is_start;
                                 }
                                 sum.emplace_back(sigma);
-                                        
-                                //for(size_t n=1;n <= std::min/**/(rck.size(),2ul);++n){
+
                                 for(size_t n=1;n <= rck.size();++n){
 
                                         std::vector<int> start_vec;
@@ -130,14 +167,35 @@ namespace{
                                                         start_vec.push_back(j);
                                                 }
                                         }
-                                        //dump(std::cout, start_vec);
+                                        dump(std::cout, start_vec);
                                         if( start_vec.empty() )
                                                 break;
-                                        //dump(std::cout, start_vec);
-                                        //cpy.dump();
-
 
                                         for( int start : start_vec ){
+
+                                                do{
+                                                        std::string aux;
+                                                        aux += "current_line\n";
+                                                        if( i == 0 ){
+                                                                aux += '|' + std::string(width, '-');
+                                                        } else {
+                                                                aux += '|' + board_lines[i-1];
+                                                        }
+                                                        aux += "\n";
+                                                        aux += '|' + board_lines[i];
+                                                        aux += "\n";
+                                                        if( i + 1 == board_lines.size() ){
+                                                                aux += '|' + std::string(width, '-');
+                                                        } else {
+                                                                aux += '|' + board_lines[i+1];
+                                                        }
+                                                        aux += "\n";
+                                                        aux += std::string( start + 1,' ');
+                                                        aux += "^\n";
+                                                        aux += "END\n";
+                                                        boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
+                                                        std::cout << aux;
+                                                }while(0);
 
                                                 auto const& start_move(moves[start]);
                                                 std::string prefix;
@@ -148,7 +206,6 @@ namespace{
                                                         prefix += current_line[j];
                                                 }
                                                 prefix = std::string(prefix.rbegin(), prefix.rend());
-
 
                                                 std::vector<std::tuple<std::string, size_t, rack> > stack;
                                                 enum{
@@ -162,7 +219,7 @@ namespace{
                                                         stack.pop_back();
                                                                 
 
-                                                        //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
+                                                        PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
                                                         auto current_idx {get<Item_MoveIdx>(item)};
                                                         if( current_idx - start == n ){
@@ -171,7 +228,7 @@ namespace{
 
                                                                 bool ret = boost::binary_search( dict, word );
 
-                                                                //PRINT_SEQ((ret)(i)(n)(start)(word));
+                                                                PRINT_SEQ((ret)(i)(n)(start)(word));
 
                                                                 if( ret ){
                                                                         f(start, i, word);
@@ -186,13 +243,13 @@ namespace{
                                                                 std::string current_move_prefix{get<Ele_Left>(current_move)};
                                                                 std::string suffix;
 
-                                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
+                                                                PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
                                                                 if( current_idx + 1 < moves.size() ){
 
                                                                         auto cpy_start{get<Ele_Idx>(moves[current_idx]) +1},
                                                                              cpy_end  {get<Ele_Idx>(moves[current_idx +1])};
-                                                                        //PRINT_SEQ((cpy_start)(cpy_end));
+                                                                        PRINT_SEQ((cpy_start)(cpy_end));
                                                                         for(;
                                                                             cpy_start!=cpy_end;
                                                                             ++cpy_start)
@@ -208,7 +265,7 @@ namespace{
                                                                                 perp_word += t;
                                                                                 perp_word += current_move_suffix;
                                                                                 bool ret = boost::binary_search( dict, perp_word );
-                                                                                //PRINT_SEQ((ret)(perp_word));
+                                                                                PRINT_SEQ((ret)(perp_word));
                                                                                 if( ! ret ){
                                                                                         continue;
                                                                                 }
@@ -226,41 +283,18 @@ namespace{
                         }
                 }
                 void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
-
                         for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
-
+                                std::cout << "solving " << orientation << "\n";
                                 auto cache = detail::string_cache_lines(orientation, board);
 
                                 this->solve_(cache, r, dict, [&](size_t x, size_t y, std::string const& word){
                                              callback(orientation, x, y, word);
                                 });
                         }
-                        #ifdef DKFJKDJF
-                        boost::sort( cands, [](auto&& l, auto&& r){
-                                return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
-                        });
-                        auto p = [&b](auto&& best){
-                                auto cpy{b};
-                                cpy.dump();
-                                auto x = get<Cand_X>(best);
-                                auto y = get<Cand_Y>(best);
-                                for( auto c : get<Cand_Word>(best)){
-                                        cpy(x,y) = c;
-                                        ++x;
-                                }
-                                cpy.dump();
-                                PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
-                        };
-
-                        p(cands.back());
-                        #endif
-
                 }
                 std::shared_ptr<strategy> clone()override{
-                        return std::make_shared<fast_solver>(dict_);
+                        return std::make_shared<fast_solver>();
                 }
-        private:
-                std::shared_ptr<dictionary_t> dict_;
         };
         
         

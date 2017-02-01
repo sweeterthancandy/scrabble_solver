@@ -3,9 +3,9 @@
 
 namespace ss{
 
-
 	namespace tests{
 		void render_test(){
+                        using std::get;
 			board board(15,15,' ');
 
 			auto r = renderer_factory::get_inst()->make("cout_renderer");
