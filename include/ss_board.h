@@ -125,10 +125,10 @@ namespace ss{
                         ostr << std::flush;
                 }
                 #else
-                void dump(std::ostream& ostr = std::cout)const{
-                        for(size_t y=0;y!=(*this).y_len();++y){
-                                for(size_t x=0;x!=(*this).x_len();++x){
-                                        auto d = (*this)(x,y);
+                void dump(array_orientation orientation = array_orientation::horizontal, std::ostream& ostr = std::cout)const{
+                        for(size_t y=0;y!=(*this).y_len(orientation);++y){
+                                for(size_t x=0;x!=(*this).x_len(orientation);++x){
+                                        auto d = (*this)(orientation,x,y);
 
                                         switch(d){
                                         case '\0':

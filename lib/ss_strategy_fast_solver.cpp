@@ -3,6 +3,7 @@
 #include "ss_driver.h"
 #include "ss_dict.h"
 #include "ss_util.h"
+#include "ss_io.h"
 
 #include <iostream>
 #include <fstream>
@@ -62,21 +63,15 @@ namespace{
                                                 find all possible words
                  */
                 template<class F>
-                void solve_(std::vector<std::string> const& board_lines, rack const& rck, dictionary_t const& dict, F f)
+                void solve_(board const& brd, array_orientation orientation, rack const& rck, dictionary_t const& dict, F f)
 		{
+
+                                
+                        auto board_lines = detail::string_cache_lines(orientation, brd);
 
                         assert( board_lines.size() && "precondition failed");
                         
-                        do{
-                                std::string aux;
-                                aux += "board_lines\n";
-                                boost::for_each( board_lines, [&](auto&& line){
-                                        aux += line + "\n";
-                                });
-                                aux += "END\n";
-                                boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
-                                std::cout << aux;
-                        }while(0);
+                        
 
                         size_t width = board_lines.front().size();
 
@@ -100,31 +95,6 @@ namespace{
                                 std::vector<int> sum;
                                 int sigma = 0;
 
-                                do{
-                                        std::string aux;
-                                        aux += "current_line\n";
-                                        if( i == 0 ){
-                                                aux += '|' + std::string(width, '-');
-                                        } else {
-                                                aux += '|' + board_lines[i-1];
-                                        }
-                                        aux += "\n";
-                                        aux += '|' + board_lines[i];
-                                        aux += "\n";
-                                        if( i + 1 == board_lines.size() ){
-                                                aux += '|' + std::string(width, '-');
-                                        } else {
-                                                aux += '|' + board_lines[i+1];
-                                        }
-                                        aux += "\n";
-                                        #if 0
-                                        aux += std::string( j + 1,' ');
-                                        aux += "^\n";
-                                        #endif
-                                        aux += "END\n";
-                                        boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
-                                        std::cout << aux;
-                                }while(0);
 
                                 for(size_t j=0;j!=width;++j){
                                         if( current_line[j] != '\0')
@@ -156,6 +126,9 @@ namespace{
                                         sigma += is_start;
                                 }
                                 sum.emplace_back(sigma);
+                                
+
+                                std::vector<std::tuple<size_t, std::vector<int> > > start_vecs;
 
                                 for(size_t n=1;n <= rck.size();++n){
 
@@ -167,35 +140,15 @@ namespace{
                                                         start_vec.push_back(j);
                                                 }
                                         }
-                                        dump(std::cout, start_vec);
-                                        if( start_vec.empty() )
-                                                break;
+                                        start_vecs.emplace_back(std::make_tuple(n, std::move(start_vec)));
+                                }
+
+                                for( auto const& t : start_vecs){
+                                        auto n = get<0>(t);
+                                        auto start_vec = get<1>(t);
 
                                         for( int start : start_vec ){
 
-                                                do{
-                                                        std::string aux;
-                                                        aux += "current_line\n";
-                                                        if( i == 0 ){
-                                                                aux += '|' + std::string(width, '-');
-                                                        } else {
-                                                                aux += '|' + board_lines[i-1];
-                                                        }
-                                                        aux += "\n";
-                                                        aux += '|' + board_lines[i];
-                                                        aux += "\n";
-                                                        if( i + 1 == board_lines.size() ){
-                                                                aux += '|' + std::string(width, '-');
-                                                        } else {
-                                                                aux += '|' + board_lines[i+1];
-                                                        }
-                                                        aux += "\n";
-                                                        aux += std::string( start + 1,' ');
-                                                        aux += "^\n";
-                                                        aux += "END\n";
-                                                        boost::for_each( aux, [](char& c){ if(c=='\0')c=' ';});
-                                                        std::cout << aux;
-                                                }while(0);
 
                                                 auto const& start_move(moves[start]);
                                                 std::string prefix;
@@ -206,6 +159,16 @@ namespace{
                                                         prefix += current_line[j];
                                                 }
                                                 prefix = std::string(prefix.rbegin(), prefix.rend());
+                                                
+                                                io::board_renderer r(brd, orientation);
+                                                r.title("starting solve_")
+                                                        .mark_row(i)
+                                                        .put_tag("start", start)
+                                                        .put_tag("start_move", get<Ele_Idx>(start_move))
+                                                        .put_tag("prefix", prefix)
+                                                        .put_tag("n", n)
+                                                        ;
+
 
                                                 std::vector<std::tuple<std::string, size_t, rack> > stack;
                                                 enum{
@@ -213,13 +176,26 @@ namespace{
                                                         Item_MoveIdx,
                                                         Item_Rack
                                                 };
+
                                                 stack.emplace_back( std::move(prefix), start, rck);
                                                 for(; stack.size();){
                                                         auto item = stack.back();
                                                         stack.pop_back();
+                                                
+                                                        auto cmt = [&](std::string const& comment){
+                                                                std::string s;
+                                                                auto diff = get<Item_MoveIdx>(item) - start;
+                                                                if( diff){
+                                                                        s += std::string(diff*2 ,'-');
+                                                                }
+                                                                s += comment;
+                                                                r.comment(s);
+                                                        };
+
+
                                                                 
 
-                                                        PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
+                                                        //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
                                                         auto current_idx {get<Item_MoveIdx>(item)};
                                                         if( current_idx - start == n ){
@@ -228,7 +204,14 @@ namespace{
 
                                                                 bool ret = boost::binary_search( dict, word );
 
-                                                                PRINT_SEQ((ret)(i)(n)(start)(word));
+
+                                                                //PRINT_SEQ((ret)(i)(n)(start)(word));
+
+                                                                if( ret ){
+                                                                        cmt( "found word : " + word);
+                                                                }else{
+                                                                        cmt( "not a word : " + word);
+                                                                }
 
                                                                 if( ret ){
                                                                         f(start, i, word);
@@ -243,13 +226,13 @@ namespace{
                                                                 std::string current_move_prefix{get<Ele_Left>(current_move)};
                                                                 std::string suffix;
 
-                                                                PRINT_SEQ((current_move_prefix)(current_move_suffix));
+                                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
                                                                 if( current_idx + 1 < moves.size() ){
 
                                                                         auto cpy_start{get<Ele_Idx>(moves[current_idx]) +1},
                                                                              cpy_end  {get<Ele_Idx>(moves[current_idx +1])};
-                                                                        PRINT_SEQ((cpy_start)(cpy_end));
+                                                                        //PRINT_SEQ((cpy_start)(cpy_end));
                                                                         for(;
                                                                             cpy_start!=cpy_end;
                                                                             ++cpy_start)
@@ -265,7 +248,12 @@ namespace{
                                                                                 perp_word += t;
                                                                                 perp_word += current_move_suffix;
                                                                                 bool ret = boost::binary_search( dict, perp_word );
-                                                                                PRINT_SEQ((ret)(perp_word));
+                                                                                //PRINT_SEQ((ret)(perp_word));
+                                                                                if( ret ){
+                                                                                        cmt( "found perp word : " + perp_word);
+                                                                                }else{
+                                                                                        cmt( "not a perp word : " + perp_word);
+                                                                                }
                                                                                 if( ! ret ){
                                                                                         continue;
                                                                                 }
@@ -278,6 +266,7 @@ namespace{
                                                                 }
                                                         }
                                                 }
+                                                r.display();
                                         }
                                 }
                         }
@@ -285,9 +274,8 @@ namespace{
                 void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
                         for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
                                 std::cout << "solving " << orientation << "\n";
-                                auto cache = detail::string_cache_lines(orientation, board);
 
-                                this->solve_(cache, r, dict, [&](size_t x, size_t y, std::string const& word){
+                                this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, std::string const& word){
                                              callback(orientation, x, y, word);
                                 });
                         }
