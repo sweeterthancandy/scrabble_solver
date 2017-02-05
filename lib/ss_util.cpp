@@ -66,7 +66,7 @@ namespace ss{
                 boost::copy(other, std::back_inserter(words));
 
                 for(auto& word : words){
-                        bool ret = std::binary_search(dict.begin(), dict.end(), word);
+                        bool ret = dict.contains(word);
                         //std::cout << word << ( ret ? " Is a word" : " Is not at word") << "\n";
                         if( ! ret ){
                                 bad_words.emplace_back(word);

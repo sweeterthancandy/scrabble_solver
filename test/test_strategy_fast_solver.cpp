@@ -27,11 +27,13 @@ TEST(strategy, simple){
           /*14*/"               "
         ;
                                 
-        auto dict = std::make_unique<dictionary_t>();
-        dict->emplace_back("WO");
-        dict->emplace_back("WORLD");
-        dict->emplace_back("WORLDS");
-        dict->emplace_back("HELLOS");
+        std::vector<std::string> proto_dict;
+        proto_dict.emplace_back("WO");
+        proto_dict.emplace_back("WORLD");
+        proto_dict.emplace_back("WORLDS");
+        proto_dict.emplace_back("HELLOS");
+
+        dictionary_t dict{std::move(proto_dict)};
 
 
         board board(15,15,' ');
@@ -41,7 +43,7 @@ TEST(strategy, simple){
         auto strat = strategy_factory::get_inst()->make("fast_solver");
         
         move_db db;
-        strat->yeild(board, rck, *dict, db.accepter());
+        strat->yeild(board, rck, dict, db.accepter());
         db.dump();
 
         // sanity checks

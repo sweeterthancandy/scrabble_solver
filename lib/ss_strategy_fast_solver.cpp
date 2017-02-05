@@ -195,6 +195,10 @@ namespace{
                                                                 r.comment(s);
                                                         };
 
+                                                        if( ! dict.contains_prefix( get<Item_Word>(item) )){
+                                                                continue;
+                                                        }
+
 
                                                                 
 
@@ -204,8 +208,7 @@ namespace{
                                                                 // terminal
                                                                 auto word = get<Item_Word>(item);
 
-                                                                bool ret = boost::binary_search( dict, word );
-
+                                                                bool ret = dict.contains(word);
 
                                                                 //PRINT_SEQ((ret)(i)(n)(start)(word));
 
@@ -243,13 +246,14 @@ namespace{
                                                                         }
                                                                 }
 
+
                                                                 for( auto t : current_rack.make_tile_set() ){
 
                                                                         if( current_move_suffix.size() || current_move_prefix.size() ){
                                                                                 auto perp_word{current_move_prefix};
                                                                                 perp_word += t;
                                                                                 perp_word += current_move_suffix;
-                                                                                bool ret = boost::binary_search( dict, perp_word );
+                                                                                bool ret = dict.contains(perp_word);
                                                                                 //PRINT_SEQ((ret)(perp_word));
                                                                                 if( ret ){
                                                                                         cmt( "found perp word : " + perp_word);
@@ -261,8 +265,10 @@ namespace{
                                                                                 }
                                                                         }
 
+                                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
+
                                                                         stack.emplace_back(
-                                                                                get<Item_Word>(item) + t + suffix,
+                                                                                next_suffix,
                                                                                 get<Item_MoveIdx>(item)+1,
                                                                                 current_rack.clone_remove_tile(t));
 
