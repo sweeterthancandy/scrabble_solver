@@ -5,28 +5,28 @@ namespace ss{
         std::vector<std::string> words_from_board(board const& b, search_direction direction){
                 std::vector<std::string> result;
 
-                auto tpl = [&result](auto&& aux){
+                auto tpl = [&result](board const& aux, array_orientation orientation){
                         enum class state_t{
                                 looking_for_word,
                                 matching_word
                         };
 
-                        for(size_t x=0;x!=aux.x_len();++x){
+                        for(size_t y=0; y!=aux.y_len(orientation);++y){
                                 state_t state = state_t::looking_for_word;
                                 std::string buffer;
-                                for(size_t y=0; y!=aux.y_len();++y){
+                                for(size_t x=0;x!=aux.x_len(orientation);++x){
 
                                         switch(state){
                                         case state_t::looking_for_word:
                                                 assert( buffer.empty() );
-                                                if( aux(x,y) == '\0')
+                                                if( aux(orientation,x,y) == '\0')
                                                         continue;
                                                 // start of start '\<\w'
-                                                buffer += aux(x,y);
+                                                buffer += aux(orientation,x,y);
                                                 state = state_t::matching_word;
                                                 break;
                                         case state_t::matching_word:
-                                                if( aux(x,y) == '\0'){
+                                                if( aux(orientation, x,y) == '\0'){
                                                         // end of word '\w\>'
                                                         assert( buffer.size() );
                                                         if( 2 <= buffer.size() && ! boost::binary_search(result, buffer)){
@@ -36,7 +36,7 @@ namespace ss{
                                                         buffer.clear();
                                                         state = state_t::looking_for_word;
                                                 } else{
-                                                        buffer += aux(x,y);
+                                                        buffer += aux(orientation, x,y);
                                                 }
                                                 break;
                                         }
@@ -50,10 +50,10 @@ namespace ss{
                 };
 
                 if( static_cast<long>(direction) & static_cast<long>(search_direction::vertical)){
-                        tpl(b);
+                        tpl(b, array_orientation::vertical);
                 }
                 if( static_cast<long>(direction) & static_cast<long>(search_direction::horizontal)){
-                        tpl(make_const_rotate_view(b));
+                        tpl(b, array_orientation::horizontal);
                 }
                         
                 return std::move(result);

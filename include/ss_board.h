@@ -10,45 +10,28 @@
 
 #include "ss_generic_factory.h"
 #include "ss_rack.h"
+#include "ss_orientation.h"
 
 namespace ss{
 
-	enum class decoration{
-		none,
-		double_letter,
-		tripple_letter,
-		double_word,
-		tripple_word
-	};
                 
-        enum class array_orientation{
-                horizontal,
-                vertical
-        };
-        inline
-        std::ostream& operator<<(std::ostream& ostr, array_orientation orientation){
-                switch(orientation){
-                case array_orientation::horizontal:
-                        return ostr << "horizontal";
-                case array_orientation::vertical:
-                        return ostr << "vertical";
-                }
-        }
 
         /*
          * Want to use a lightweight representation of the board,
          * as potentially going to be constructing alot of them
+         *
+         *
+         *      ' '   : nothing
+         *      [a-Z] : corresponding tile
          */
 
-        template<class T>
-        struct basic_array{
-                using value_type = T;
-                using array_t = std::vector<T>;
-                basic_array(size_t x, size_t y, T const& val = T()):
+        struct board{
+                using array_t = std::vector<char>;
+                board(size_t x, size_t y, char val = ' '):
                         x_len_(x), y_len_(y),
                         rep_(x * y, val)
                 {}
-                basic_array(basic_array const& that, array_orientation orientation = array_orientation::horizontal):
+                board(board const& that, array_orientation orientation = array_orientation::horizontal):
                         x_len_(that.x_len_), y_len_(that.y_len_)
                         ,rep_(x_len_ * y_len_)
                 {
@@ -59,16 +42,12 @@ namespace ss{
                         }
                 }
 
-
-
-
-
-                auto const& operator()(size_t x, size_t y)const{
+                char operator()(size_t x, size_t y)const{
                         assert( x < x_len_ && "out of bound");
                         assert( y < y_len_ && "out of bound");
                         return rep_.at( x * y_len_ + y);
                 }
-                auto& operator()(size_t x, size_t y){
+                char& operator()(size_t x, size_t y){
                         assert( x < x_len_ && "out of bound");
                         assert( y < y_len_ && "out of bound");
                         return rep_.at( x * y_len_ + y);
@@ -82,7 +61,7 @@ namespace ss{
 
 
 
-                auto const& operator()(array_orientation orientation, size_t x, size_t y)const{
+                char operator()(array_orientation orientation, size_t x, size_t y)const{
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return this->operator()(x,y);
@@ -91,7 +70,7 @@ namespace ss{
                         }
                         __builtin_unreachable();
                 }
-                auto& operator()(array_orientation orientation, size_t x, size_t y){
+                char& operator()(array_orientation orientation, size_t x, size_t y){
                         switch(orientation){
                         case array_orientation::horizontal:
                                 return this->operator()(x,y);
@@ -118,21 +97,14 @@ namespace ss{
                         }
                         __builtin_unreachable();
                 }
-                void fill( T const& val){
+                void fill( char val){
                         boost::fill( rep_, val);
                 }
-                std::shared_ptr<basic_array> clone(){
-                        return std::make_shared<basic_array>(*this);
+                #if 0
+                std::shared_ptr<board> clone(){
+                        return std::make_shared<board>(*this);
                 }
-                void paste(basic_array const& that, T const& mask){
-                        for(size_t x=0;x!=x_len_;++x){
-                                for(size_t y=0;y!=y_len_;++y){
-                                        if( that(x,y) != mask ){
-                                                (*this)(x,y) = that(x,y);
-                                        }
-                                }
-                        }
-                }
+                #endif
 
                 void dump(std::ostream& ostr = std::cout)const{
                         ostr << std::string((*this).x_len() * 3 + 2, '-') << "\n";
@@ -159,40 +131,5 @@ namespace ss{
                 size_t y_len_;
                 array_t rep_;
         };
-
-        template<class Impl>
-        struct basic_array_rotate_view{
-                using value_type = typename Impl::value_type;
-                explicit basic_array_rotate_view(Impl& impl):
-                        impl_(&impl)
-                {}
-                auto const& operator()(size_t x, size_t y)const{
-                        return impl_->operator()(y,x);
-                }
-                auto& operator()(size_t x, size_t y){
-                        return impl_->operator()(y,x);
-                }
-		auto x_len()const{ return impl_->y_len(); }
-		auto y_len()const{ return impl_->x_len(); }
-
-                operator basic_array<value_type> const&(){ return *impl_; }
-        private:
-                Impl* impl_;
-        };
-
-        template<class Impl>
-        auto make_rotate_view(Impl& impl){
-                return basic_array_rotate_view<Impl>(impl);
-        }
-        template<class Impl>
-        auto make_const_rotate_view(Impl const& impl){
-                return basic_array_rotate_view<Impl const>(impl);
-        }
-
-        using board = basic_array<tile_t>;
-        using score_board = basic_array<decoration>;
-
-        using board_factory = generic_factory<board>;
-        using score_board_factory = generic_factory<score_board>;
 
 }

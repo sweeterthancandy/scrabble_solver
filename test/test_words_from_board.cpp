@@ -54,6 +54,7 @@ TEST(words_from_board, simple){
                                "          "
                                "          "
                               );
+
         auto hor = ss::words_from_board(b, ss::search_direction::horizontal);
         auto vert = ss::words_from_board(b, ss::search_direction::vertical);
         auto both = ss::words_from_board(b, ss::search_direction::both);
@@ -62,7 +63,7 @@ TEST(words_from_board, simple){
 
 
 
-        #if 0
+        #if 1
         std::cout << "{\n";
         boost::for_each( both, [](auto&& _){ std::cout << _ << ",";});
         std::cout << "}\n";
