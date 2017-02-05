@@ -27,7 +27,9 @@ namespace ss{
 
         struct board{
                 using array_t = std::vector<char>;
-                board(size_t x, size_t y, char val = ' '):
+                // want to be default constructed
+                // TODO make default construction something more logical
+                board(size_t x = 10, size_t y = 10, char val = ' '):
                         x_len_(x), y_len_(y),
                         rep_(x * y, val)
                 {}
@@ -100,12 +102,8 @@ namespace ss{
                 void fill( char val){
                         boost::fill( rep_, val);
                 }
-                #if 0
-                std::shared_ptr<board> clone(){
-                        return std::make_shared<board>(*this);
-                }
-                #endif
 
+                #if 0
                 void dump(std::ostream& ostr = std::cout)const{
                         ostr << std::string((*this).x_len() * 3 + 2, '-') << "\n";
                         for(size_t y=0;y!=(*this).y_len();++y){
@@ -118,7 +116,7 @@ namespace ss{
                                                 ostr << "   ";
                                                 break;
                                         default:
-                                                ostr << ' ' << ( std::isgraph(d) ? d : '?' ) << ' ';
+                                                ostr << ' ' << ( std::isgraph(d) || std::isspace(d) ? d : '?' ) << ' ';
                                         }
                                 }
                                 ostr << "|\n";
@@ -126,6 +124,24 @@ namespace ss{
                         ostr << std::string((*this).x_len() * 3 + 2, '-') << "\n";
                         ostr << std::flush;
                 }
+                #else
+                void dump(std::ostream& ostr = std::cout)const{
+                        for(size_t y=0;y!=(*this).y_len();++y){
+                                for(size_t x=0;x!=(*this).x_len();++x){
+                                        auto d = (*this)(x,y);
+
+                                        switch(d){
+                                        case '\0':
+                                                ostr << "   ";
+                                                break;
+                                        default:
+                                                ostr << ' ' << ( std::isgraph(d) || std::isspace(d) ? d : '?' ) << ' ';
+                                        }
+                                }
+                                ostr << "\n";
+                        }
+                }
+                #endif
         private:
                 size_t x_len_;
                 size_t y_len_;
