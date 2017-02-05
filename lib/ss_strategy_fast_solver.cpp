@@ -174,21 +174,24 @@ namespace{
                                                 enum{
                                                         Item_Word,
                                                         Item_MoveIdx,
-                                                        Item_Rack
+                                                        Item_Rack,
+                                                        Item_Depth
                                                 };
 
                                                 stack.emplace_back( std::move(prefix), start, rck);
                                                 for(; stack.size();){
                                                         auto item = stack.back();
                                                         stack.pop_back();
+                                                        auto current_idx {get<Item_MoveIdx>(item)};
+                                                        auto delta{current_idx - start};
                                                 
                                                         auto cmt = [&](std::string const& comment){
                                                                 std::string s;
-                                                                auto diff = get<Item_MoveIdx>(item) - start;
-                                                                if( diff){
-                                                                        s += std::string(diff*2 ,'-');
+                                                                if( delta){
+                                                                        s += std::string(delta*2 ,'-');
                                                                 }
                                                                 s += comment;
+                                                                s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
                                                                 r.comment(s);
                                                         };
 
@@ -197,8 +200,7 @@ namespace{
 
                                                         //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
-                                                        auto current_idx {get<Item_MoveIdx>(item)};
-                                                        if( current_idx - start == n ){
+                                                        if( delta == n ){
                                                                 // terminal
                                                                 auto word = get<Item_Word>(item);
 
@@ -263,6 +265,7 @@ namespace{
                                                                                 get<Item_Word>(item) + t + suffix,
                                                                                 get<Item_MoveIdx>(item)+1,
                                                                                 current_rack.clone_remove_tile(t));
+
                                                                 }
                                                         }
                                                 }
