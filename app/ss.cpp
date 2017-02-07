@@ -100,7 +100,7 @@ namespace ss{
                                         PRINT_SEQ((get<Cand_X>(best))(get<Cand_Y>(best))(get<Cand_Word>(best)));
                                 };
 
-                                boost::for_each( cands, [](auto const& _){ std::cout << get<Cand_Word>(_) << "\n";});
+                                //boost::for_each( cands, [](auto const& _){ std::cout << get<Cand_Word>(_) << "\n";});
                                 
 
                                 p(cands.back());

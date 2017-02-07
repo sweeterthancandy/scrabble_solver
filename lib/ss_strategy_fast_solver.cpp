@@ -16,6 +16,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm.hpp>
 
+// #define ALGORITHM_DEBUG
 
 // this represents the possible
 
@@ -222,6 +223,7 @@ namespace{
                                         }
                                         prefix = std::string(prefix.rbegin(), prefix.rend());
                                         
+                                        #ifdef ALGORITHM_DEBUG
                                         io::board_renderer r(brd, orientation);
                                         r.title("starting solve_")
                                                 .mark_row(i)
@@ -230,6 +232,7 @@ namespace{
                                                 .put_tag("prefix", prefix)
                                                 .put_tag("min_n", min_n)
                                                 ;
+                                        #endif
 
 
                                         std::vector<std::tuple<std::string, size_t, rack> > stack;
@@ -344,14 +347,15 @@ namespace{
 
                                                 }
                                         }
+                                        #ifdef ALGORITHM_DEBUG
                                         r.display();
+                                        #else
+                                        #endif
                                 }
                         }
                 }
                 void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
                         for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
-                                std::cout << "solving " << orientation << "\n";
-
                                 this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, std::string const& word){
                                              switch(orientation){
                                              case array_orientation::vertical:
