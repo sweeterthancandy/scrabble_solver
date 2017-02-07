@@ -39,6 +39,13 @@ namespace ss{
                                 });
                         });
                 }
+                size_t size()const{
+                        size_t result{0};
+                        for( auto const& p : map_ ){
+                                result += p.second.size();
+                        }
+                        return result;
+                }
         private:
                 std::map<std::tuple<array_orientation, size_t,size_t>, std::set<std::string> > map_;
         };

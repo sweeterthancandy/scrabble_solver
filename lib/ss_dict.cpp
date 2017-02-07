@@ -18,6 +18,6 @@ namespace{
                                         if( fstr.eof() )
                                                 break;
                                 }
-                                return std::make_unique<dictionary_t>(std::move(proto_dict));
+                                return std::make_unique<std_dictionary>(std::move(proto_dict));
                         } ),0);
 }

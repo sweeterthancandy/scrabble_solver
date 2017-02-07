@@ -9,9 +9,9 @@ protected:
                 proto.emplace_back("hello");
                 proto.emplace_back("world");
 
-                dict = ss::dictionary_t{std::move(proto)};
+                dict = ss::std_dictionary{std::move(proto)};
         }
-        ss::dictionary_t dict;
+        ss::std_dictionary dict;
 };
 
 TEST_F(dictionary, contains){

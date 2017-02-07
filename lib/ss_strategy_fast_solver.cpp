@@ -285,7 +285,14 @@ namespace{
                                 std::cout << "solving " << orientation << "\n";
 
                                 this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, std::string const& word){
-                                             callback(orientation, x, y, word);
+                                             switch(orientation){
+                                             case array_orientation::vertical:
+                                                     callback(orientation, y, x, word);
+                                                     break;
+                                             default:
+                                                     callback(orientation, x, y, word);
+                                                     break;
+                                            }
                                 });
                         }
                 }
