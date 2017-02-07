@@ -192,174 +192,159 @@ namespace{
 
                                  */
                                 
-                                // start, number of tiles to put down
-                                #if 0
-                                std::vector<std::tuple<size_t, std::vector<size_t> > > start_vecs;
-                                for(size_t j=0;j + n <= moves.size(); ++j){
-                                        std::vector<int> len;
-                                        for(size_t n=1;n <= rck.size();++n){
+                                // {start, min tiles}
+                                std::vector<std::tuple<size_t, size_t> > start_vecs;
+                                //for(size_t j=0;j + n <= moves.size(); ++j){
+                                for(size_t j=0;j < width; ++j){
+                                        for(size_t n=1;
+                                            j+n <= moves.size() && n <= rck.size();
+                                            ++n){
                                                 auto diff = sum[j+n] - sum[j];
                                                 if(diff){
-                                                        len.push_back(n);
+                                                        start_vecs.push_back(std::make_tuple(j,n));
+                                                        break;
                                                 }
                                         }
-                                        if( len.size() ){
-                                                start_vecs.push_back( std::make_tuple(j, std::move(len)));
-                                        }
-
                                 }
-                                #else
-                                #endif
 
-                                std::vector<std::tuple<size_t, std::vector<int> > > start_vecs;
-
-                                for(size_t n=1;n <= rck.size();++n){
-
-                                        std::vector<int> start_vec;
-
-                                        for(size_t j=0;j + n <= moves.size(); ++j){
-                                                auto diff = sum[j+n] - sum[j];
-                                                if(diff){
-                                                        start_vec.push_back(j);
-                                                }
-                                        }
-                                        start_vecs.emplace_back(std::make_tuple(n, std::move(start_vec)));
-                                }
 
                                 for( auto const& t : start_vecs){
-                                        auto n = get<0>(t);
-                                        auto start_vec = get<1>(t);
+                                        auto start = get<0>(t);
+                                        auto min_n = get<1>(t);
+                                        auto const& start_move(moves[start]);
+                                        std::string prefix;
 
-                                        for( int start : start_vec ){
-
-
-                                                auto const& start_move(moves[start]);
-                                                std::string prefix;
-                                                for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
-                                                        --j;
-                                                        if( current_line[j] == '\0')
-                                                                break;
-                                                        prefix += current_line[j];
-                                                }
-                                                prefix = std::string(prefix.rbegin(), prefix.rend());
-                                                
-                                                io::board_renderer r(brd, orientation);
-                                                r.title("starting solve_")
-                                                        .mark_row(i)
-                                                        .put_tag("start", start)
-                                                        .put_tag("start_move", get<Ele_Idx>(start_move))
-                                                        .put_tag("prefix", prefix)
-                                                        .put_tag("n", n)
-                                                        ;
+                                        for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
+                                                --j;
+                                                if( current_line[j] == '\0')
+                                                        break;
+                                                prefix += current_line[j];
+                                        }
+                                        prefix = std::string(prefix.rbegin(), prefix.rend());
+                                        
+                                        io::board_renderer r(brd, orientation);
+                                        r.title("starting solve_")
+                                                .mark_row(i)
+                                                .put_tag("start", start)
+                                                .put_tag("start_move", get<Ele_Idx>(start_move))
+                                                .put_tag("prefix", prefix)
+                                                .put_tag("min_n", min_n)
+                                                ;
 
 
-                                                std::vector<std::tuple<std::string, size_t, rack> > stack;
-                                                enum{
-                                                        Item_Word,
-                                                        Item_MoveIdx,
-                                                        Item_Rack,
-                                                        Item_Depth
+                                        std::vector<std::tuple<std::string, size_t, rack> > stack;
+                                        enum{
+                                                Item_Word,
+                                                Item_MoveIdx,
+                                                Item_Rack,
+                                                Item_Depth
+                                        };
+
+                                        stack.emplace_back( std::move(prefix), start, rck);
+                                        for(; stack.size();){
+                                                auto item = stack.back();
+                                                stack.pop_back();
+                                                auto current_idx {get<Item_MoveIdx>(item)};
+                                                auto delta{current_idx - start};
+                                        
+                                                auto cmt = [&](std::string const& comment){
+                                                        #if 0
+                                                        std::string s;
+                                                        if( delta){
+                                                                s += std::string(delta*2 ,'-');
+                                                        }
+                                                        s += comment;
+                                                        s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
+                                                        r.comment(s);
+                                                        #else
+                                                        #endif
                                                 };
 
-                                                stack.emplace_back( std::move(prefix), start, rck);
-                                                for(; stack.size();){
-                                                        auto item = stack.back();
-                                                        stack.pop_back();
-                                                        auto current_idx {get<Item_MoveIdx>(item)};
-                                                        auto delta{current_idx - start};
-                                                
-                                                        auto cmt = [&](std::string const& comment){
-                                                                std::string s;
-                                                                if( delta){
-                                                                        s += std::string(delta*2 ,'-');
-                                                                }
-                                                                s += comment;
-                                                                s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
-                                                                r.comment(s);
-                                                        };
+                                                // terminal
 
-                                                        if( ! dict.contains_prefix( get<Item_Word>(item) )){
-                                                                continue;
+                                                if( ! dict.contains_prefix( get<Item_Word>(item) )){
+                                                        continue;
+                                                }
+
+
+                                                        
+
+                                                //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
+
+                                                if( delta >= min_n ){
+                                                        // terminal
+                                                        auto word = get<Item_Word>(item);
+
+                                                        bool ret = dict.contains(word);
+
+                                                        //PRINT_SEQ((ret)(i)(n)(start)(word));
+
+                                                        if( ret ){
+                                                                cmt( "found word : " + word);
+                                                        }else{
+                                                                cmt( "not a word : " + word);
                                                         }
 
+                                                        if( ret ){
+                                                                f(start, i, word);
+                                                        }
+                                                        
+                                                } 
+                                                
+                                                if( current_idx == moves.size() )
+                                                        continue;
+                                                // else, yeild all other possible states
+                                                
+                                                auto current_rack{get<Item_Rack>(item)};
+                                                auto const& current_move{moves.at(current_idx)};
+                                                std::string current_move_suffix{get<Ele_Right>(current_move)};
+                                                std::string current_move_prefix{get<Ele_Left>(current_move)};
+                                                std::string suffix;
 
-                                                                
+                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
 
-                                                        //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
+                                                if( current_idx + 1 < moves.size() ){
 
-                                                        if( delta == n ){
-                                                                // terminal
-                                                                auto word = get<Item_Word>(item);
-
-                                                                bool ret = dict.contains(word);
-
-                                                                //PRINT_SEQ((ret)(i)(n)(start)(word));
-
-                                                                if( ret ){
-                                                                        cmt( "found word : " + word);
-                                                                }else{
-                                                                        cmt( "not a word : " + word);
-                                                                }
-
-                                                                if( ret ){
-                                                                        f(start, i, word);
-                                                                }
-                                                                
-                                                        } else{
-                                                                // else, yeild all other possible states
-                                                                
-                                                                auto current_rack{get<Item_Rack>(item)};
-                                                                auto const& current_move{moves.at(current_idx)};
-                                                                std::string current_move_suffix{get<Ele_Right>(current_move)};
-                                                                std::string current_move_prefix{get<Ele_Left>(current_move)};
-                                                                std::string suffix;
-
-                                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
-
-                                                                if( current_idx + 1 < moves.size() ){
-
-                                                                        auto cpy_start{get<Ele_Idx>(moves[current_idx]) +1},
-                                                                             cpy_end  {get<Ele_Idx>(moves[current_idx +1])};
-                                                                        //PRINT_SEQ((cpy_start)(cpy_end));
-                                                                        for(;
-                                                                            cpy_start!=cpy_end;
-                                                                            ++cpy_start)
-                                                                        {
-                                                                                suffix += current_line[cpy_start];
-                                                                        }
-                                                                }
-
-
-                                                                for( auto t : current_rack.make_tile_set() ){
-
-                                                                        if( current_move_suffix.size() || current_move_prefix.size() ){
-                                                                                auto perp_word{current_move_prefix};
-                                                                                perp_word += t;
-                                                                                perp_word += current_move_suffix;
-                                                                                bool ret = dict.contains(perp_word);
-                                                                                //PRINT_SEQ((ret)(perp_word));
-                                                                                if( ret ){
-                                                                                        cmt( "found perp word : " + perp_word);
-                                                                                }else{
-                                                                                        cmt( "not a perp word : " + perp_word);
-                                                                                }
-                                                                                if( ! ret ){
-                                                                                        continue;
-                                                                                }
-                                                                        }
-
-                                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
-
-                                                                        stack.emplace_back(
-                                                                                next_suffix,
-                                                                                get<Item_MoveIdx>(item)+1,
-                                                                                current_rack.clone_remove_tile(t));
-
-                                                                }
+                                                        auto cpy_start{get<Ele_Idx>(moves[current_idx]) +1},
+                                                             cpy_end  {get<Ele_Idx>(moves[current_idx +1])};
+                                                        //PRINT_SEQ((cpy_start)(cpy_end));
+                                                        for(;
+                                                            cpy_start!=cpy_end;
+                                                            ++cpy_start)
+                                                        {
+                                                                suffix += current_line[cpy_start];
                                                         }
                                                 }
-                                                r.display();
+
+
+                                                for( auto t : current_rack.make_tile_set() ){
+
+                                                        if( current_move_suffix.size() || current_move_prefix.size() ){
+                                                                auto perp_word{current_move_prefix};
+                                                                perp_word += t;
+                                                                perp_word += current_move_suffix;
+                                                                bool ret = dict.contains(perp_word);
+                                                                //PRINT_SEQ((ret)(perp_word));
+                                                                if( ret ){
+                                                                        cmt( "found perp word : " + perp_word);
+                                                                }else{
+                                                                        cmt( "not a perp word : " + perp_word);
+                                                                }
+                                                                if( ! ret ){
+                                                                        continue;
+                                                                }
+                                                        }
+
+                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
+
+                                                        stack.emplace_back(
+                                                                next_suffix,
+                                                                get<Item_MoveIdx>(item)+1,
+                                                                current_rack.clone_remove_tile(t));
+
+                                                }
                                         }
+                                        r.display();
                                 }
                         }
                 }

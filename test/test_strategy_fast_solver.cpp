@@ -101,6 +101,7 @@ TEST_F(strategy_test_2, test0){
         move_db db;
         auto dict = dictionary_factory::get_inst()->make("regular");
         strat->yeild(brd, rck, *dict, db.accepter());
+        db.dump();
         EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 6,7).count("LAMA") );
 
 }
