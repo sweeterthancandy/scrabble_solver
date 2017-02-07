@@ -51,8 +51,6 @@ TEST_F(strategy_test, true_dict){
 	true_dictionary dict;
         strat->yeild(brd, rck, dict, db.accepter());
 
-        db.dump();
-        
         EXPECT_EQ(4, db.size());
         
         EXPECT_EQ( 1,  db.lookup(array_orientation::horizontal, 7,7).size() );
@@ -60,6 +58,54 @@ TEST_F(strategy_test, true_dict){
         
         EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 7,6).size() );
         EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 7,7).size() );
+}
+
+struct strategy_test_2 : public testing::Test{
+protected:
+        virtual void SetUp()override {
+		std::string board_str = 
+		//       012345678901234
+		   /*0*/"               "
+		   /*1*/"               "
+		   /*2*/"               "
+		   /*3*/"               "
+		   /*4*/"               "
+		   /*5*/"               "
+		   /*6*/"       W       "
+		   /*7*/"   HELLO       "
+		   /*8*/"       R       "
+		   /*9*/"    MUMMY      "
+		  /*10*/"               "
+		  /*11*/"               "
+		  /*12*/"               "
+		  /*13*/"               "
+		  /*14*/"               "
+		;
+		brd = board{15,15,' '};
+		read_board_from_string(brd, board_str);
+                // LAMA,AR
+		std::string rck_str = "AA";
+		rck = rack{rck_str};
+		strat = strategy_factory::get_inst()->make("fast_solver");
+
+
+
+	}
+        board brd;
+        rack rck;
+	std::shared_ptr<strategy> strat;
+};
+
+
+TEST_F(strategy_test_2, test0){
+        move_db db;
+        auto dict = dictionary_factory::get_inst()->make("regular");
+        strat->yeild(brd, rck, *dict, db.accepter());
+        EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 6,7).count("LAMA") );
 
 }
+
+
+
+
 
