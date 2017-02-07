@@ -52,8 +52,9 @@ namespace ss{
 
 	template<bool B>
 	struct bool_dictionary : public dictionary_t{
+                // can't have anything less than a two letter word
                 bool contains(std::string const& word)const{
-			return B;
+			return ( word.size() < 2 ? false : B );
                 }
                 bool contains_prefix(std::string const& prefix)const{
 			return B;

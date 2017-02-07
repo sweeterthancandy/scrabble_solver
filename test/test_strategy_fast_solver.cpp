@@ -17,20 +17,20 @@ protected:
 		   /*2*/"               "
 		   /*3*/"               "
 		   /*4*/"               "
-		   /*5*/"       A       "
-		   /*6*/"       A       "
-		   /*7*/"    AAAAAAAAA  "
-		   /*8*/"       A       "
-		   /*9*/"    AAAA       "
-		  /*10*/"       A       "
-		  /*11*/"       A       "
+		   /*5*/"               "
+		   /*6*/"               "
+		   /*7*/"       A       "
+		   /*8*/"               "
+		   /*9*/"               "
+		  /*10*/"               "
+		  /*11*/"               "
 		  /*12*/"               "
 		  /*13*/"               "
 		  /*14*/"               "
 		;
 		brd = board{15,15,' '};
 		read_board_from_string(brd, board_str);
-		std::string rck_str = "AAAAAAA";
+		std::string rck_str = "B";
 		rck = rack{rck_str};
 		strat = strategy_factory::get_inst()->make("fast_solver");
 	}
@@ -50,22 +50,16 @@ TEST_F(strategy_test, true_dict){
         move_db db;
 	true_dictionary dict;
         strat->yeild(brd, rck, dict, db.accepter());
+
+        db.dump();
         
-        EXPECT_NE(0, db.size());
-
-        // this is a valid move
-        EXPECT_TRUE(  db.lookup(array_orientation::vertical, 4,7).count("AAAAAA") );
-
-        // this isn't a move the tiles already exist (and no one letter words)
-        EXPECT_FALSE( db.lookup(array_orientation::vertical, 7,7).count("A") );
-        EXPECT_FALSE( db.lookup(array_orientation::vertical, 7,7).count("AAA") );
-
-        // this is already on the board
-        EXPECT_FALSE(  db.lookup(array_orientation::horizontal, 4,7).count("AAAAAAAAA") );
-        // this isn't
-        EXPECT_FALSE(  db.lookup(array_orientation::horizontal, 4,7).count("AAAAAAAAAA") );
-        EXPECT_FALSE(  db.lookup(array_orientation::horizontal, 3,7).count("AAAAAAAAAA") );
-        EXPECT_FALSE(  db.lookup(array_orientation::horizontal, 3,7).count("AAAAAAAAAAA") );
+        EXPECT_EQ(4, db.size());
+        
+        EXPECT_EQ( 1,  db.lookup(array_orientation::horizontal, 7,7).size() );
+        EXPECT_EQ( 1,  db.lookup(array_orientation::horizontal, 7,7).size() );
+        
+        EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 7,6).size() );
+        EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 7,7).size() );
 
 }
 
