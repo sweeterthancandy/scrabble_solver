@@ -96,6 +96,42 @@ namespace{
                                 int sigma = 0;
 
 
+                                /*
+                                   First we can't to find the smallest set of tiles such that every 
+                                   possible must contain at least one tile from this set. This means 
+                                   that not only is the tile blank, but it's also perpendular to another
+                                   tile, as per the rules of scrabble.
+
+                                                                0123456789
+                                                               +----------+
+                                                               |          | 0
+                                                               | HELLO    | 1
+                                                               |   WORLD  | 2
+                                                               |          | 3
+                                                               +----------+
+
+                                        Consider the board about, where I've labeled the lines 0,1,2,3.
+                                   For the first row, although all the tiles are empty, only those tiles
+                                   {1,2,3,4,5} are perpenduclar are "start moves". As for the second row,
+                                   tiles {0,6,7}, {1,2,8} on the third, and {3,4,5,6,7} for the last row.
+                                   Which means we have the following bitmask.
+
+                                                                0123456789
+                                                               +----------+
+                                                               | XXXXX    | 0
+                                                               |X     XX  | 1
+                                                               | XX     X | 2
+                                                               |   XXXXX  | 3
+                                                               +----------+
+
+                                        From this, can compute all the possible moves in terms of where they can start
+                                   from for how long. As consider any subset of n blank tiles. This is a possible move
+                                   if one of the blank tiles is one of those marked above. 
+                                   
+
+                                 */
+
+
                                 for(size_t j=0;j!=width;++j){
                                         if( current_line[j] != '\0')
                                                 continue;
@@ -126,7 +162,54 @@ namespace{
                                         sigma += is_start;
                                 }
                                 sum.emplace_back(sigma);
+
+                                /*
+
+                                   Now I need to figure out, for each starting position i (this means the first tile
+                                   place in the form, so for example for
+
+                                                                0123456789
+                                                               +----------+
+                                                               |          | 0
+                                                               | HELLO    | 1
+                                                               |   WORLD  | 2
+                                                               |          | 3
+                                                               +----------+
+
+                                        We can see the starts in the form above. Now that for prepending a word, first
+                                   starting position is the first blank you place down.
+
+                                                                0123456789
+                                                               +----------+
+                                                               |XXXXXX    | 0
+                                                               |X     X   | 1
+                                                               |  X     X | 2
+                                                               |   XXXXX  | 3
+                                                               +----------+
+
+                                        This calculation is only important, for where the number of tiles placed must be at least
+                                   n_{min} to be a valid move.
+
+                                 */
                                 
+                                // start, number of tiles to put down
+                                #if 0
+                                std::vector<std::tuple<size_t, std::vector<size_t> > > start_vecs;
+                                for(size_t j=0;j + n <= moves.size(); ++j){
+                                        std::vector<int> len;
+                                        for(size_t n=1;n <= rck.size();++n){
+                                                auto diff = sum[j+n] - sum[j];
+                                                if(diff){
+                                                        len.push_back(n);
+                                                }
+                                        }
+                                        if( len.size() ){
+                                                start_vecs.push_back( std::make_tuple(j, std::move(len)));
+                                        }
+
+                                }
+                                #else
+                                #endif
 
                                 std::vector<std::tuple<size_t, std::vector<int> > > start_vecs;
 
