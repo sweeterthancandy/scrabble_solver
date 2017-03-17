@@ -9,7 +9,6 @@
 
 namespace bpt = boost::property_tree;
 
-
 struct solver_driver{
         void set_board( ss::board const& proto)                       { board_ = proto; }
         void set_rack( ss::rack const& proto)                         { rack_  = proto; }

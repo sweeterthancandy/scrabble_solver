@@ -12,6 +12,11 @@ namespace ss{
         std_dictionary::std_dictionary(std::vector<std::string> const& seq):
                 words_(seq)
         {
+                for( auto& w : words_ ){
+                        for(auto& c : w){
+                                c = std::toupper(c);
+                        }
+                }
                 boost::sort(words_);
         }
 
