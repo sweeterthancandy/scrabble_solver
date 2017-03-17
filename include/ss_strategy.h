@@ -11,7 +11,7 @@ namespace ss{
 
         struct strategy{
                 // (orientation, x, y, word)
-                using callback_t = std::function<void(array_orientation, size_t, size_t, std::string const&)>;
+                using callback_t = std::function<void(array_orientation, size_t, size_t, std::string&&, std::vector<std::string>&&)>;
                 virtual ~strategy()=default;
 
                 virtual void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)=0;

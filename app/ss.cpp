@@ -83,7 +83,8 @@ namespace ss{
                                 strat->yeild( board, rck, *dict,
                                               [&](array_orientation orientation,
                                                   size_t x, size_t y,
-                                                  std::string const& word){
+                                                  std::string&& word,
+                                                  std::vector<std::string>&& perps){
                                         cands.emplace_back(orientation, x, y, word);
                                 });
                                 boost::sort( cands, [](auto&& l, auto&& r){

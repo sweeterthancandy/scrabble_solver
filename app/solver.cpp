@@ -27,7 +27,8 @@ struct solver_driver{
                 strat_->yeild( board_, rack_, *dict_,
                               [&](ss::array_orientation orientation,
                                   size_t x, size_t y,
-                                  std::string const& word)
+                                  std::string&& word,
+                                  std::vector<std::string>&& perps)
                               {
                                       m[std::make_tuple(x,y,orientation)].push_back(word);
                               });

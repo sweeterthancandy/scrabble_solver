@@ -18,7 +18,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#define ALGORITHM_DEBUG
+//#define ALGORITHM_DEBUG
 
 #define PRINT_SEQ(SEQ) 
 
@@ -244,15 +244,23 @@
                                         #endif
 
 
-                                        std::vector<std::tuple<std::string, size_t, rack> > stack;
+                                        std::vector<
+                                                std::tuple<
+                                                        std::string,
+                                                        std::vector<std::string>,
+                                                        size_t,
+                                                        rack
+                                                >
+                                        > stack;
                                         enum{
                                                 Item_Word,
+                                                Item_Perps,
                                                 Item_MoveIdx,
                                                 Item_Rack,
                                                 Item_Depth
                                         };
 
-                                        stack.emplace_back( std::move(prefix), start, rck);
+                                        stack.emplace_back( std::move(prefix), std::vector<std::string>{}, start, rck);
                                         for(; stack.size();){
                                                 auto item = stack.back();
                                                 stack.pop_back();
@@ -260,6 +268,7 @@
                                                 auto delta{current_idx - start};
                                         
                                                 auto cmt = [&](std::string const& comment){
+                                                        #ifdef ALGORITHM_DEBUG
                                                         std::string s;
                                                         if( delta){
                                                                 s += std::string(delta*2 ,'-');
@@ -267,6 +276,7 @@
                                                         s += comment;
                                                         s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
                                                         r.comment(s);
+                                                        #endif // ALGORITHM_DEBUG
                                                 };
 
                                                 // terminal
@@ -296,7 +306,7 @@
                                                         }
 
                                                         if( ret ){
-                                                                f(start, i, word);
+                                                                f(start, i, std::move(word), std::move(get<Item_Perps>(item)));
                                                         }
                                                         
                                                 } 
@@ -329,8 +339,10 @@
 
                                                 for( auto t : current_rack.make_tile_set() ){
 
+                                                        std::string perp_word;
+
                                                         if( current_move_suffix.size() || current_move_prefix.size() ){
-                                                                auto perp_word{current_move_prefix};
+                                                                perp_word = current_move_prefix;
                                                                 perp_word += t;
                                                                 perp_word += current_move_suffix;
                                                                 bool ret = dict.contains(perp_word);
@@ -346,9 +358,12 @@
                                                         }
 
                                                         std::string next_suffix{ get<Item_Word>(item) + t + suffix };
+                                                        auto perp = std::move(get<Item_Perps>(item));
+                                                        perp.emplace_back(std::move(perp_word));
 
                                                         stack.emplace_back(
                                                                 next_suffix,
+                                                                std::move(perp),
                                                                 get<Item_MoveIdx>(item)+1,
                                                                 current_rack.clone_remove_tile(t));
 
@@ -363,13 +378,13 @@
                 }
                 void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
                         for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
-                                this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, std::string const& word){
+                                this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, auto&& word, auto&& perps){
                                              switch(orientation){
                                              case array_orientation::vertical:
-                                                     callback(orientation, y, x, word);
+                                                     callback(orientation, y, x, std::forward<decltype(word)>(word), std::forward<decltype(perps)>(perps));
                                                      break;
-                                             default:
-                                                     callback(orientation, x, y, word);
+                                             case array_orientation::horizontal:
+                                                     callback(orientation, x, y, std::forward<decltype(word)>(word), std::forward<decltype(perps)>(perps));
                                                      break;
                                             }
                                 });

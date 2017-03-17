@@ -22,9 +22,8 @@ namespace ss{
                         return map_[std::make_tuple(orientation,x,y)];
                 }
                 auto accepter(){
-                        return [this](array_orientation orientation, size_t x, size_t y, std::string word){
-                                std::cout << "pushing\n";
-                                this->push(orientation, x, y, std::move(word));
+                        return [this](array_orientation orientation, size_t x, size_t y, std::string&& word, std::vector<std::string>&& perps){
+                                this->push(orientation, x, y, word);
                         };
                 }
                 void dump()const{
