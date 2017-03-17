@@ -18,6 +18,9 @@ include_directories(include)
 add_executable(ss app/ss.cpp)
 target_link_libraries(ss ss_lib)
 
+add_executable(solver app/solver.cpp)
+target_link_libraries(solver ss_lib)
+
 add_executable(ss_test ${test_sources})
 
 target_link_libraries(ss_test GTest::GTest GTest::Main)

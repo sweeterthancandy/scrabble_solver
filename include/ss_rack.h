@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <iostream>
 
 namespace ss{
 
@@ -33,6 +34,7 @@ namespace ss{
 		decltype(auto) cbegin()const{return tiles_.begin(); }
 		decltype(auto) cend()const{return tiles_.end(); }
                 friend std::ostream& operator<<(std::ostream& ostr, rack const& self);
+                void dump(std::ostream& ostr = std::cout)const{ ostr << *this; }
         private:
                 std::vector<tile_t> tiles_;
         };

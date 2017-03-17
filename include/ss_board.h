@@ -43,6 +43,24 @@ namespace ss{
                                 }
                         }
                 }
+                board(std::vector<std::string> const& rep){
+                        if( rep.empty() ){
+                                BOOST_THROW_EXCEPTION(std::domain_error("bad rep"));
+                        }
+                        x_len_ = rep.back().size();
+                        y_len_ = rep.size();
+                        for(auto const& l : rep ){
+                                if( l.size() != x_len_ ){
+                                        BOOST_THROW_EXCEPTION(std::domain_error("bad rep"));
+                                }
+                        }
+                        rep_.assign( x_len_ * y_len_, ' ');
+                        for( size_t x=0;x!=x_len_;++x){
+                                for( size_t y=0;y!=y_len_;++y){
+                                        this->operator()(x,y) = rep[x][y];
+                                }
+                        }
+                }
 
                 char operator()(size_t x, size_t y)const{
                         assert( x < x_len_ && "out of bound");

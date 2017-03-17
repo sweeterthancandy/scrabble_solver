@@ -103,7 +103,6 @@ TEST_F(strategy_test_2, test0){
         strat->yeild(brd, rck, *dict, db.accepter());
         db.dump();
         EXPECT_EQ( 1,  db.lookup(array_orientation::vertical, 6,7).count("LAMA") );
-
 }
 
 
