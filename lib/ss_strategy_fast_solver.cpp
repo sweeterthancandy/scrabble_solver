@@ -20,6 +20,8 @@
 
 #define ALGORITHM_DEBUG
 
+#define PRINT_SEQ(SEQ) 
+
 // this represents the possible
         using std::get;
         template<class T, class = std::__void_t< decltype( std::declval<T>().begin() ) > >

@@ -1,6 +1,8 @@
 #include "ss.h"
 #include "ss_util.h"
 
+#include <tuple>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -15,19 +17,35 @@ struct solver_driver{
         void set_dictionary( std::shared_ptr<ss::dictionary_t> proto ){ dict_  = proto; }
 
         void run( bpt::ptree& root){
+                using std::get;
+                enum{
+                        Ele_X,
+                        Ele_Y,
+                        Ele_Ori
+                };
+                using key_type = std::tuple<size_t, size_t, ss::array_orientation>;
+                std::map<key_type, std::vector<std::string> > m;
                 strat_->yeild( board_, rack_, *dict_,
                               [&](ss::array_orientation orientation,
                                   size_t x, size_t y,
                                   std::string const& word)
                               {
-                                      PRINT_SEQ((x)(y)(word));
-                                      bpt::ptree child;
-                                      child.put("x", x);
-                                      child.put("y", y);
-                                      child.put("orientation", orientation);
-                                      child.put("word", word);
-                                      root.add_child("move", child);
+                                      m[std::make_tuple(x,y,orientation)].push_back(word);
                               });
+                for( auto const& p : m ){
+                        
+                        bpt::ptree child, words;
+
+                        for( auto const& w : p.second)
+                                words.add("word", w);
+
+                        child.put("x", get<Ele_X>(p.first));
+                        child.put("y", get<Ele_Y>(p.first));
+                        child.put("orientation", get<Ele_Ori>(p.first));
+                        child.put_child("words", words);
+
+                        root.add_child("move", child);
+                }
         }
 
 private:
