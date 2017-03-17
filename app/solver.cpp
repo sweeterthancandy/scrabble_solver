@@ -23,27 +23,38 @@ struct solver_driver{
                         Ele_Ori
                 };
                 using key_type = std::tuple<size_t, size_t, ss::array_orientation>;
-                std::map<key_type, std::vector<std::string> > m;
+                std::map<key_type, std::vector<std::tuple<std::string, std::vector<std::string> > > > m;
                 strat_->yeild( board_, rack_, *dict_,
                               [&](ss::array_orientation orientation,
                                   size_t x, size_t y,
                                   std::string&& word,
                                   std::vector<std::string>&& perps)
                               {
-                                      m[std::make_tuple(x,y,orientation)].push_back(word);
+                                      m[std::make_tuple(x,y,orientation)].emplace_back(word, perps);
                               });
                 for( auto const& p : m ){
                         
-                        bpt::ptree child, words;
-
-                        for( auto const& w : p.second)
-                                words.add("word", w);
-
+                        bpt::ptree words;
+                        for( auto const& w : p.second){
+                                bpt::ptree item;
+                                item.add("word", get<0>(w));
+                                for(size_t i{0};i!=get<1>(w).size();++i){
+                                        auto const& p{ get<1>(w)[i] };
+                                        if( p.empty())
+                                                continue;
+                                        bpt::ptree perpt;
+                                        perpt.add("index", i);
+                                        perpt.add("word", p);
+                                        item.add_child("perp", perpt);
+                                }
+                                words.add_child("move", item);
+                        }
+                        
+                        bpt::ptree child;
                         child.put("x", get<Ele_X>(p.first));
                         child.put("y", get<Ele_Y>(p.first));
                         child.put("orientation", get<Ele_Ori>(p.first));
                         child.put_child("words", words);
-
                         root.add_child("move", child);
                 }
         }
