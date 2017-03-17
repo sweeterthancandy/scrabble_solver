@@ -7,11 +7,16 @@
 
 namespace ss{
         rack::rack(std::vector<tile_t>& tiles):
-                tiles_(tiles){
+                tiles_(tiles)
+        {
+                for(char& c: tiles_)
+                        c = toupper(c);
                 boost::sort(tiles_);
         }
         rack::rack(std::string const& s)
                 :tiles_(s.begin(), s.end()){
+                for(char& c: tiles_)
+                        c = toupper(c);
                 boost::sort(tiles_);
         }
         rack rack::clone_remove_tile(tile_t t)const{

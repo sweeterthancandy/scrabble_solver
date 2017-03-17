@@ -3,7 +3,7 @@
 #include "ss_strategy.h"
 #include "ss_move_db.h"
 #include "ss_util.h"
-#include "ss_dict.h"
+#include "ss_dict_helpers.h"
 
 using namespace ss;
 

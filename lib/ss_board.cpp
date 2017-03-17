@@ -54,7 +54,10 @@ namespace ss{
                 rep_.assign( x_len_ * y_len_, ' ');
                 for( size_t x=0;x!=x_len_;++x){
                         for( size_t y=0;y!=y_len_;++y){
-                                this->operator()(x,y) = rep[x][y];
+                                char c = rep[x][y];
+                                if( std::isspace(c) )
+                                        c = '\0';
+                                this->operator()(x,y) = c;
                         }
                 }
         }

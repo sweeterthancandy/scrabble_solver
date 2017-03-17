@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "ss_dict.h"
+#include "ss_dict_helpers.h"
 
 class dictionary : public testing::Test {
 protected:

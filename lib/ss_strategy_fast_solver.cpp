@@ -15,12 +15,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
-// #define ALGORITHM_DEBUG
+#define ALGORITHM_DEBUG
 
 // this represents the possible
-
-namespace{
         using std::get;
         template<class T, class = std::__void_t< decltype( std::declval<T>().begin() ) > >
         inline std::ostream& dump(std::ostream& ostr, T const& con){
@@ -32,7 +32,6 @@ namespace{
 
         using namespace ss;
 
-        namespace detail{
 
                 std::vector<std::string> string_cache_lines(array_orientation orientation, board const& b){
                         std::vector<std::string> result;
@@ -47,7 +46,6 @@ namespace{
                         return result;
 
                 }
-        }
 
         /*
          * It's important to do this in stages rather than one long computation,
@@ -66,19 +64,23 @@ namespace{
                 template<class F>
                 void solve_(board const& brd, array_orientation orientation, rack const& rck, dictionary_t const& dict, F f)
 		{
+                        namespace bpt = boost::property_tree;
+                        bpt::ptree debug_root;
 
                                 
-                        auto board_lines = detail::string_cache_lines(orientation, brd);
+                        auto board_lines = string_cache_lines(orientation, brd);
+
 
                         assert( board_lines.size() && "precondition failed");
                         
-                        
-
                         size_t width = board_lines.front().size();
+
+                        PRINT_SEQ((width));
 
                         for(size_t i=0;i!=board_lines.size();++i){
 
                                 std::string current_line = board_lines[i];
+                                PRINT_SEQ((current_line));
 
                                 /*
                                 Need to cache the sequence of moves, which is nice because it is just the 
@@ -86,15 +88,6 @@ namespace{
 
                                 Also cache an auxiallar sum, so I can tell is a subsequence is a valid move
                                  */
-                                std::vector<std::tuple<int, int, std::string, std::string> > moves;
-                                enum{
-                                        Ele_Idx,
-                                        Ele_Start,
-                                        Ele_Left,
-                                        Ele_Right
-                                };
-                                std::vector<int> sum;
-                                int sigma = 0;
 
 
                                 /*
@@ -132,6 +125,15 @@ namespace{
 
                                  */
 
+                                std::vector<std::tuple<int, int, std::string, std::string> > moves;
+                                enum{
+                                        Ele_Idx,
+                                        Ele_Start,
+                                        Ele_Left,
+                                        Ele_Right
+                                };
+                                std::vector<int> sum;
+                                int sigma = 0;
 
                                 for(size_t j=0;j!=width;++j){
                                         if( current_line[j] != '\0')
@@ -157,12 +159,15 @@ namespace{
                                                        left.size() || 
                                                        right.size();
 
+                                        PRINT_SEQ((j)(left)(left)(is_start));
+
                                         left = std::string(left.rbegin(),left.rend());
                                         moves.emplace_back( std::forward_as_tuple( j, is_start, std::move(left), std::move(right)));
                                         sum.emplace_back(sigma);
                                         sigma += is_start;
                                 }
                                 sum.emplace_back(sigma);
+
 
                                 /*
 
@@ -215,6 +220,8 @@ namespace{
                                         auto const& start_move(moves[start]);
                                         std::string prefix;
 
+                                        PRINT_SEQ((start)(min_n)(prefix));
+
                                         for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
                                                 --j;
                                                 if( current_line[j] == '\0')
@@ -251,7 +258,6 @@ namespace{
                                                 auto delta{current_idx - start};
                                         
                                                 auto cmt = [&](std::string const& comment){
-                                                        #if 0
                                                         std::string s;
                                                         if( delta){
                                                                 s += std::string(delta*2 ,'-');
@@ -259,13 +265,12 @@ namespace{
                                                         s += comment;
                                                         s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
                                                         r.comment(s);
-                                                        #else
-                                                        #endif
                                                 };
 
                                                 // terminal
 
-                                                if( ! dict.contains_prefix( get<Item_Word>(item) )){
+                                                if( get<Item_Word>(item).size() >= 2 && ! dict.contains_prefix( get<Item_Word>(item) )){
+                                                        cmt("not a prefix " + get<Item_Word>(item));
                                                         continue;
                                                 }
 
@@ -380,4 +385,3 @@ namespace{
                                                                           }
                                                                           ), 0 );
 
-}
