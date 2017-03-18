@@ -6,6 +6,7 @@
 #include "ss_renderer.h"
 #include "ss_strategy.h"
 #include "ss_dict.h"
+#include "ss_word_placement.h"
 
 #include <boost/preprocessor.hpp>
 

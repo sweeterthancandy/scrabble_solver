@@ -80,6 +80,7 @@ namespace ss{
                                         Cand_Word
                                 };
                                 std::vector<candidate_move> cands;
+                                #if 0
                                 strat->yeild( board, rck, *dict,
                                               [&](array_orientation orientation,
                                                   size_t x, size_t y,
@@ -87,6 +88,7 @@ namespace ss{
                                                   std::vector<std::string>&& perps){
                                         cands.emplace_back(orientation, x, y, word);
                                 });
+                                #endif
                                 boost::sort( cands, [](auto&& l, auto&& r){
                                         return get<Cand_Word>(l).size() < get<Cand_Word>(r).size();
                                 });

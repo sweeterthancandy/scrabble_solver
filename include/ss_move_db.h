@@ -7,6 +7,7 @@
 #include <set>
 
 #include "ss_board.h"
+#include "ss_word_placement.h"
 
 namespace ss{
 
@@ -22,8 +23,10 @@ namespace ss{
                         return map_[std::make_tuple(orientation,x,y)];
                 }
                 auto accepter(){
-                        return [this](array_orientation orientation, size_t x, size_t y, std::string&& word, std::vector<std::string>&& perps){
-                                this->push(orientation, x, y, word);
+                        return [this](std::vector<word_placement> const& placements){
+                                for( auto const& p : placements ){
+                                        this->push(p.get_orientation(), p.get_x(), p.get_y(), p.get_word());
+                                }
                         };
                 }
                 void dump()const{

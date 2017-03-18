@@ -9,9 +9,15 @@
 
 namespace ss{
 
+        struct word_placement;
+
         struct strategy{
-                // (orientation, x, y, word)
-                using callback_t = std::function<void(array_orientation, size_t, size_t, std::string&&, std::vector<std::string>&&)>;
+                // first word is the primary move
+                using callback_t = 
+                        std::function<
+                                void(std::vector<word_placement> const&)
+                        >;
+
                 virtual ~strategy()=default;
 
                 virtual void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)=0;

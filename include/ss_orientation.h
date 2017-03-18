@@ -9,6 +9,17 @@ namespace ss{
                 vertical
         };
 
+        // only makes sense
+        inline array_orientation operator!(array_orientation orientation){
+                switch(orientation){
+                case array_orientation::horizontal:
+                        return array_orientation::vertical;
+                case array_orientation::vertical:
+                        return array_orientation::horizontal;
+                }
+        }
+
+
         inline
         std::ostream& operator<<(std::ostream& ostr, array_orientation orientation){
                 switch(orientation){
@@ -17,6 +28,5 @@ namespace ss{
                 case array_orientation::vertical:
                         return ostr << "vertical";
                 }
-                return ostr << "(invalid)";
         }
 }

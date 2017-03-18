@@ -4,6 +4,7 @@
 #include "ss_dict.h"
 #include "ss_util.h"
 #include "ss_io.h"
+#include "ss_word_placement.h"
 
 #include <iostream>
 #include <fstream>
@@ -19,6 +20,10 @@
 #include <boost/property_tree/json_parser.hpp>
 
 //#define ALGORITHM_DEBUG
+
+#ifdef  PRINT_SEQ
+#undef  PRINT_SEQ
+#endif /* PRINT_SEQ */
 
 #define PRINT_SEQ(SEQ) 
 
@@ -49,6 +54,8 @@
 
                 }
 
+
+
         /*
          * It's important to do this in stages rather than one long computation,
          * for easy debugging, ie, can buffer several staging into something pretty
@@ -71,6 +78,29 @@
 
                                 
                         auto board_lines = string_cache_lines(orientation, brd);
+
+                        std::function<word_placement(size_t, size_t, std::string)>
+                                make_placement,
+                                make_perp_placement
+                        ;
+                        switch( orientation ){
+                        case array_orientation::horizontal:
+                                make_placement = [](size_t x, size_t y, std::string word){
+                                        return word_placement(x,y, array_orientation::horizontal, std::move(word));
+                                };
+                                make_perp_placement = [](size_t x, size_t y, std::string word){
+                                        return word_placement(x,y, array_orientation::vertical, std::move(word));
+                                };
+                                break;
+                        case array_orientation::vertical:
+                                make_placement = [](size_t x, size_t y, std::string word){
+                                        return word_placement(y,x, array_orientation::vertical, std::move(word));
+                                };
+                                make_perp_placement = [](size_t x, size_t y, std::string word){
+                                        return word_placement(y,x, array_orientation::horizontal, std::move(word));
+                                };
+                                break;
+                        }
 
 
                         assert( board_lines.size() && "precondition failed");
@@ -222,6 +252,8 @@
                                         auto const& start_move(moves[start]);
                                         std::string prefix;
 
+                                        auto word_start = start - prefix.size();
+
                                         PRINT_SEQ((start)(min_n)(prefix));
 
                                         for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
@@ -247,7 +279,7 @@
                                         std::vector<
                                                 std::tuple<
                                                         std::string,
-                                                        std::vector<std::string>,
+                                                        std::vector<word_placement>,
                                                         size_t,
                                                         rack
                                                 >
@@ -260,7 +292,7 @@
                                                 Item_Depth
                                         };
 
-                                        stack.emplace_back( std::move(prefix), std::vector<std::string>{}, start, rck);
+                                        stack.emplace_back( std::move(prefix), std::vector<word_placement>{}, start, rck);
                                         for(; stack.size();){
                                                 auto item = stack.back();
                                                 stack.pop_back();
@@ -306,7 +338,11 @@
                                                         }
 
                                                         if( ret ){
-                                                                f(start, i, std::move(word), std::move(get<Item_Perps>(item)));
+                                                                std::vector<word_placement> placements;
+                                                                placements.push_back( make_placement(start, i, word));
+                                                                boost::copy( get<Item_Perps>(item), std::back_inserter(placements));
+
+                                                                f(placements);
                                                         }
                                                         
                                                 } 
@@ -317,8 +353,63 @@
                                                 
                                                 auto current_rack{get<Item_Rack>(item)};
                                                 auto const& current_move{moves.at(current_idx)};
+
+                                                /* These are for perpinducatlor words, ie for below
+                                                   placeing WORLD creates the perpenduclar word
+                                                   TOO, with the prefix T and the suffic O,
+                                                  
+                                                                0123456789
+                                                               +----------+
+                                                               |   T      | 0
+                                                              >|  WORLD   | 1
+                                                               |   0      | 2
+                                                               |          | 3
+                                                               +----------+
+                                                                   ^
+                                                   but of couse would be no suffix, or prefix, consider
+                                                   placing WORLD below, we create the perp world AW and 
+                                                   the perp word LA, with the formar prefix A (suffix null)
+                                                   and the latter with suffic A.
+
+                                                                0123456789
+                                                               +----------+
+                                                               |  A       | 0
+                                                               |  WORLD   | 1
+                                                               |     A    | 2
+                                                               |          | 3
+                                                               +----------+
+                                                                    
+
+                                                */
+
                                                 std::string current_move_suffix{get<Ele_Right>(current_move)};
                                                 std::string current_move_prefix{get<Ele_Left>(current_move)};
+
+
+                                                /*
+                                                   Consider placeing letters HE incremenalled on the 
+                                                   board,
+                                                                0123456789
+                                                               +----------+
+                                                               |    T     | 0
+                                                               |    A     | 1
+                                                               |    L     | 2
+                                                               |    L     | 3
+                                                               +----------+
+                                                   which will create the board HEL, 
+                                                   
+                                                                0123456789
+                                                               +----------+
+                                                               |    T     | 0
+                                                               |    A     | 1
+                                                               |  HEL     | 2
+                                                               |    L     | 3
+                                                               +----------+
+                                                   ie the word is at HEL after placing HE, with the suffix
+                                                   L. Ie placing HELO creates HELLO.
+
+                                                   
+                                                 */
                                                 std::string suffix;
 
                                                 //PRINT_SEQ((current_move_prefix)(current_move_suffix));
@@ -337,9 +428,12 @@
                                                 }
 
 
-                                                for( auto t : current_rack.make_tile_set() ){
+                                                for( auto t : current_rack.make_tile_set() )
+                                                {
+                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
 
                                                         std::string perp_word;
+                                                        auto perps = std::move(get<Item_Perps>(item));
 
                                                         if( current_move_suffix.size() || current_move_prefix.size() ){
                                                                 perp_word = current_move_prefix;
@@ -355,15 +449,24 @@
                                                                 if( ! ret ){
                                                                         continue;
                                                                 }
+
+                                                                size_t y_offset;
+
+
+
                                                         }
 
-                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
-                                                        auto perp = std::move(get<Item_Perps>(item));
-                                                        perp.emplace_back(std::move(perp_word));
+                                                        if( perp_word.size() ){
+                                                                perps.emplace_back(
+                                                                        make_perp_placement( 
+                                                                                word_start + get<Item_Word>(item).size(),
+                                                                                i - current_move_prefix.size(),
+                                                                                perp_word) );
+                                                        }
 
                                                         stack.emplace_back(
                                                                 next_suffix,
-                                                                std::move(perp),
+                                                                std::move(perps),
                                                                 get<Item_MoveIdx>(item)+1,
                                                                 current_rack.clone_remove_tile(t));
 
@@ -378,16 +481,7 @@
                 }
                 void yeild(board const& board, rack const& r, dictionary_t const& dict, callback_t callback)override{
                         for( auto orientation : std::vector<array_orientation>{array_orientation::horizontal, array_orientation::vertical} ){
-                                this->solve_(board, orientation, r, dict, [&](size_t x, size_t y, auto&& word, auto&& perps){
-                                             switch(orientation){
-                                             case array_orientation::vertical:
-                                                     callback(orientation, y, x, std::forward<decltype(word)>(word), std::forward<decltype(perps)>(perps));
-                                                     break;
-                                             case array_orientation::horizontal:
-                                                     callback(orientation, x, y, std::forward<decltype(word)>(word), std::forward<decltype(perps)>(perps));
-                                                     break;
-                                            }
-                                });
+                                this->solve_(board, orientation, r, dict, callback);
                         }
                 }
                 std::shared_ptr<strategy> clone()override{
