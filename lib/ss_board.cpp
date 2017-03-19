@@ -12,6 +12,7 @@
 #include "ss_generic_factory.h"
 #include "ss_rack.h"
 #include "ss_orientation.h"
+#include "ss_tile_traits.h"
 
 namespace ss{
 
@@ -152,6 +153,17 @@ namespace ss{
                         }
                         ostr << "\n";
                 }
+        }
+        std::vector<std::string> board::to_string_vec()const{
+                std::vector<std::string> result;
+                for(size_t y{0};y!=y_len_;++y){
+                        result.emplace_back();
+                        for(size_t x{0};x!=x_len_;++x){
+                                char c{(*this)(x,y)};
+                                result.back() += ( tile_traits::empty(c) ? ' ' : c );
+                        }
+                }
+                return std::move(result);
         }
         #endif
 

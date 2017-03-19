@@ -3,6 +3,8 @@
 #include <cassert>
 #include <algorithm>
 #include <iostream>
+#include <vector>
+#include <string>
 
 #include <boost/range/algorithm.hpp>
 #include <boost/range/algorithm_ext/is_sorted.hpp>
@@ -44,6 +46,7 @@ namespace ss{
 		size_t y_len(array_orientation orientation)const;
                 void fill( char val);
                 void dump(array_orientation orientation = array_orientation::horizontal, std::ostream& ostr = std::cout)const;
+                std::vector<std::string> to_string_vec()const;
 
         private:
                 size_t x_len_;

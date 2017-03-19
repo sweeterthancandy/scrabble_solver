@@ -45,8 +45,17 @@ struct solver_driver{
                         // for all moves
                         for( auto const& move : p.second){
                                 bpt::ptree words;
-                                ss::board applied(board_);
-                                apply_placement(applied, move);
+                                do{
+                                        bpt::ptree appliedt;
+                                        ss::board applied(board_);
+                                        apply_placement(applied, move);
+                                        auto sv{applied.to_string_vec()};
+                                        for( auto const& line : sv){
+                                                appliedt.add("board", line); 
+                                        }
+                                        words.add_child("result", appliedt);
+                                }while(0);
+
                                 auto metric{ metric_->calculate(move) };
                                 for( auto const& placement : move ){
                                         bpt::ptree item;
