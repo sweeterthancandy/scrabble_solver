@@ -1,5 +1,6 @@
 #include "ss.h"
 #include "ss_util.h"
+#include "ss_board_util.h"
 
 #include <tuple>
 
@@ -44,6 +45,8 @@ struct solver_driver{
                         // for all moves
                         for( auto const& move : p.second){
                                 bpt::ptree words;
+                                ss::board applied(board_);
+                                apply_placement(applied, move);
                                 auto metric{ metric_->calculate(move) };
                                 for( auto const& placement : move ){
                                         bpt::ptree item;

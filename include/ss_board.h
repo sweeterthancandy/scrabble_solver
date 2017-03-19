@@ -44,10 +44,13 @@ namespace ss{
 		size_t y_len(array_orientation orientation)const;
                 void fill( char val);
                 void dump(array_orientation orientation = array_orientation::horizontal, std::ostream& ostr = std::cout)const;
+
         private:
                 size_t x_len_;
                 size_t y_len_;
                 array_t rep_;
         };
+
+
 
 }
