@@ -1,3 +1,4 @@
+#include "ss.h"
 #include "ss_metric.h"
 #include "ss_word_placement.h"
 
@@ -125,26 +126,26 @@ namespace ss{
                                         case tile_decl::tl:
                                                 underlying += tile_value[word[i]] * 3;
                                                 break;
-                                        default:
-                                                underlying += tile_value[word[i]] * 1;
-                                                break;
-                                        }
-                                        // secondly calculate the multiplier for placed
-                                        // tiles, rememebering that dw and tl multiply
-                                        
-                                        switch( decl[idx][y] ){
                                         case tile_decl::dw:
+                                                underlying += tile_value[word[i]] * 1;
                                                 multiplyer *= 2;
                                                 break;
-                                        case tile_decl::tl:
+                                        case tile_decl::tw:
+                                                underlying += tile_value[word[i]] * 1;
                                                 multiplyer *= 3;
                                                 break;
-                                        default:
+                                        case tile_decl::st:
+                                                underlying += tile_value[word[i]] * 1;
+                                                multiplyer *= 2;
+                                                break;
+                                        case tile_decl::__:
+                                                underlying += tile_value[word[i]] * 1;
                                                 break;
                                         }
 
                                 }
                         }
+                        // PRINT_SEQ((underlying)(multiplyer));
                         return underlying * multiplyer;
                 }
         };
