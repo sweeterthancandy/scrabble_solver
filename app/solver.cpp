@@ -15,6 +15,7 @@ struct solver_driver{
         void set_rack( ss::rack const& proto)                         { rack_  = proto; }
         void set_strategy( std::shared_ptr<ss::strategy> proto )      { strat_ = proto; }
         void set_dictionary( std::shared_ptr<ss::dictionary_t> proto ){ dict_  = proto; }
+        void set_metric( std::shared_ptr<ss::metric> proto )          { metric_= proto; }
 
         void run( bpt::ptree& root){
                 using std::get;
@@ -31,16 +32,19 @@ struct solver_driver{
                                       auto const& first{ placements.front() };
                                       m[std::make_tuple(first.get_x(),first.get_y(),first.get_orientation())].emplace_back(placements);
                               });
-                // for all (x,y) pair
+                // for all (x,y,o)
                 for( auto const& p : m ){
                         bpt::ptree moves;
-                        moves.put("x", get<0>(p.first));
-                        moves.put("y", get<1>(p.first));
-                        moves.put("orientation", get<2>(p.first));
+                        
+
+                        moves.put("x", get<Ele_X>(p.first));
+                        moves.put("y", get<Ele_Y>(p.first));
+                        moves.put("orientation", get<Ele_Ori>(p.first));
                         
                         // for all moves
                         for( auto const& move : p.second){
                                 bpt::ptree words;
+                                auto metric{ metric_->calculate(move) };
                                 for( auto const& placement : move ){
                                         bpt::ptree item;
 
@@ -50,6 +54,7 @@ struct solver_driver{
 
                                         words.add_child("placement", item);
                                 }
+                                words.put("metric", metric);
                                 moves.add_child("move", words);
                         }
 
@@ -64,6 +69,7 @@ private:
         ss::rack rack_;
         std::shared_ptr<ss::strategy> strat_;
         std::shared_ptr<ss::dictionary_t> dict_;
+        std::shared_ptr<ss::metric> metric_;
 
 };
 
@@ -87,6 +93,7 @@ int main(int argc, char** argv){
         driver.set_rack( r );
         driver.set_dictionary( ss::dictionary_factory::get_inst()->make("regular") );
         driver.set_strategy( ss::strategy_factory::get_inst()->make("fast_solver") );
+        driver.set_metric( ss::metric_factory::get_inst()->make("scrabble_metric") );
 
         bpt::ptree ret;
         driver.run(ret);

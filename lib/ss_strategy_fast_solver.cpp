@@ -86,18 +86,18 @@
                         switch( orientation ){
                         case array_orientation::horizontal:
                                 make_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(x,y, array_orientation::horizontal, std::move(word));
+                                        return word_placement(x,y, array_orientation::horizontal, word, word);
                                 };
                                 make_perp_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(x,y, array_orientation::vertical, std::move(word));
+                                        return word_placement(x,y, array_orientation::vertical, word, word);
                                 };
                                 break;
                         case array_orientation::vertical:
                                 make_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(y,x, array_orientation::vertical, std::move(word));
+                                        return word_placement(y,x, array_orientation::vertical, word, word);
                                 };
                                 make_perp_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(y,x, array_orientation::horizontal, std::move(word));
+                                        return word_placement(y,x, array_orientation::horizontal, word, word);
                                 };
                                 break;
                         }

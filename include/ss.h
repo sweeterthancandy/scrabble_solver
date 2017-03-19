@@ -7,6 +7,7 @@
 #include "ss_strategy.h"
 #include "ss_dict.h"
 #include "ss_word_placement.h"
+#include "ss_metric.h"
 
 #include <boost/preprocessor.hpp>
 
