@@ -1,8 +1,11 @@
 #pragma once
 
 #include "ss_orientation.h"
+#include "ss_tile_traits.h"
 
 namespace ss{
+
+        struct board;
         /*
          * Idea of this is when working out possible moves,
          * some moves have perpendicular words, which during
@@ -55,4 +58,6 @@ namespace ss{
                 std::string word_;
                 std::string mask_;
         };
+
+        word_placement make_word_placement(board const& b, size_t x, size_t y, array_orientation orientation, std::string word);
 }

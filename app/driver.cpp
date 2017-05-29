@@ -136,11 +136,32 @@ void command_context::render(std::ostream& ostr)const{
         ostr << "\nmoves:\n    ";
         boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
 }
+// first placement is the real one, ie the one where the mask represents the tiles placed, the others are perps
 void command_context::apply_placements(std::vector<ss::word_placement> const& placements){
         auto score{ metric_ptr->calculate(placements) };
+
+        auto& p{ players[active_player] };
+
+        std::vector<char> to_remove;
+        for( char c : placements.front().get_mask() ){
+                if( ss::tile_traits::not_empty(c) ){
+                        auto iter{ p.rack.find(c) };
+                        assert( iter != std::string::npos && "unexpected");
+                        p.rack.erase(iter);
+                }
+        }
+
+        for(;p.rack.size() < 7 && bag.size();){
+                p.rack += bag.back();
+                bag.pop_back();
+        }
+
+
         for( auto const& p : placements ){
                 std::cout << p;
         }
+        // need to calculate tiles used without double counting
+
         for( auto const& p : placements ){
                 size_t y{ p.get_y()};
                 size_t x{ p.get_x()};
@@ -421,11 +442,13 @@ struct move : sub_command{
                         //               T   <------ place this tile
                         //               
                         if( word.size() > 1){
-                                placements.emplace_back( diff.front().first,
-                                                         diff.front().second,
-                                                         orientation,
-                                                         word,
-                                                         word);
+                                placements.emplace_back( 
+                                        make_word_placement(
+                                                ctx.board,
+                                                diff.front().first,
+                                                diff.front().second,
+                                                orientation,
+                                                word) );
                         }
                         
                 } else{
@@ -456,11 +479,13 @@ struct move : sub_command{
                         }
 
                         if( word.size() > 1){
-                                placements.emplace_back( diff.front().first,
-                                                         diff.front().second,
-                                                         orientation,
-                                                         word,
-                                                         word);
+                                placements.emplace_back( 
+                                        make_word_placement(
+                                                ctx.board,
+                                                diff.front().first,
+                                                diff.front().second,
+                                                orientation,
+                                                word));
                         }
                 }
 
@@ -486,14 +511,16 @@ struct move : sub_command{
                                 std::string left{rev_left.rbegin(), rev_left.rend()};
                                 std::string word{ left + next(d.first, y ) + right };
 
-                                PRINT_SEQ((left)(right)(word));
+                                //PRINT_SEQ((left)(right)(word));
 
                                 if( word.size() > 1){
-                                        placements.emplace_back( d.first - left.size(),
-                                                                 y,
-                                                                 ss::array_orientation::horizontal,
-                                                                 word,
-                                                                 word);
+                                        placements.emplace_back(
+                                                make_word_placement(
+                                                        ctx.board,
+                                                        d.first - left.size(),
+                                                        y,
+                                                        ss::array_orientation::horizontal,
+                                                        word));
                                 }
                         } else {
                                 // vertial perpindicular
@@ -515,14 +542,16 @@ struct move : sub_command{
                                 std::string left{rev_left.rbegin(), rev_left.rend()};
                                 std::string word{ left + next(x, d.second ) + right };
 
-                                PRINT_SEQ((left)(right)(word));
+                                //PRINT_SEQ((left)(right)(word));
 
                                 if( word.size() > 1){
-                                        placements.emplace_back( x,
-                                                                 d.second - left.size(),
-                                                                 ss::array_orientation::horizontal,
-                                                                 word,
-                                                                 word);
+                                        placements.emplace_back(
+                                                make_word_placement(
+                                                        ctx.board,
+                                                        x,
+                                                        d.second - left.size(),
+                                                        ss::array_orientation::horizontal,
+                                                        word));
                                 }
                         }
                 }
@@ -540,15 +569,6 @@ struct move : sub_command{
                 }
 
                 ctx.apply_placements( placements );
-
-
-                #if 0
-                std::stringstream sstr;
-                sstr << "player " << ctx.active_player << " placed " << placements.front().get_word() << " at <" << diff.front().first << "," << diff.front().second << ">";
-                ctx.moves.emplace_back(sstr.str());
-                        
-                ctx.board = next;
-                #endif
 
                 for(;;){
 
@@ -572,10 +592,6 @@ struct move : sub_command{
                                 });
 
                                 ctx.apply_placements( all_placements.back() );
-                                #if 0
-                                for( auto const& x : all_placements.back())
-                                        x.dump();
-                                #endif
                         }
 
                 }
@@ -604,7 +620,7 @@ int driver_main(int argc, char** argv){
                 sub_command_factory::get()->print_help(argv[0]);
                 return EXIT_FAILURE;
         }
-        #if 0
+        #if 1
         std::ofstream of("scrabble.json");
         ctx.write(of);
         std::ofstream scof(ctx.scratch);
