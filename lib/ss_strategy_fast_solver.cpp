@@ -474,7 +474,6 @@
                                         }
                                         #ifdef ALGORITHM_DEBUG
                                         r.display();
-                                        #else
                                         #endif
                                 }
                         }
