@@ -1,6 +1,6 @@
 
 fu! CreateGame()
-        call system("./driver init")
+        "call system("./driver init")
         :e scrabble.scratch
 endfu
 
@@ -11,3 +11,7 @@ endfu
 
 autocmd BufWritePost scrabble.scratch call Update()
 autocmd! VimEnter * call CreateGame()
+
+set cursorcolumn
+set cursorline
+

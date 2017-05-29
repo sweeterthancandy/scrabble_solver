@@ -310,6 +310,7 @@ struct move : sub_command{
                 }
 
                 ss::array_orientation orientation{ ss::array_orientation::horizontal };
+
                 if( 
                     std::min_element( diff.begin(), diff.end(), [](auto const& l, auto const& r){ return l.first < r.first; } )->first ==
                     std::max_element( diff.begin(), diff.end(), [](auto const& l, auto const& r){ return l.first < r.first; } )->first ){
@@ -330,45 +331,168 @@ struct move : sub_command{
                 }
 
                 if( board_empty ){
-
-                        // first move, special case, just check moves sequential
-                        if( orientation == ss::array_orientation::vertical ){
-                                boost::sort( diff, [](auto const& l, auto const& r){ return l.second < r.second; } );
-                                for(size_t i=0;i!=diff.size()-1;++i){
-                                        if( diff[i].second +1 != diff[i+1].second ){
-                                                ctx.log.push_back("invalid move, not verital");
-                                                return EXIT_SUCCESS;
-                                        }
-                                }
-                        } else{
-                                boost::sort( diff, [](auto const& l, auto const& r){ return l.second < r.second; } );
-                                for( auto const& p : diff){
-                                        std::cout << "{" << p.first << "," << p.second << "}\n";
-                                }
-                                for(size_t i=0;i!=diff.size()-1;++i){
-                                        if( diff[i].first +1 != diff[i+1].first ){
-                                                ctx.log.push_back("invalid move, not horizontal");
-                                                return EXIT_SUCCESS;
-                                        }
-                                }
-                        }
-
                         if( boost::find_if( diff, [](auto const& p){ return p.first == 7 && p.second == 7; } ) == diff.end()){
                                 ctx.log.push_back("first move must cross the middle <8,8>");
                                 return EXIT_SUCCESS;
                         }
-                
-                        std::string word;
-                        for( auto const& pos : diff ){
-                                word += next(pos.first, pos.second);
+                }
+
+                // check tiles are seqiemntial, ie
+                //
+                //         X   X
+                //       --X---X
+                //         X   X
+                //         XXXXX
+                //
+                // is valid, whilst 
+                //
+                //         X   X
+                //       --X- -X-
+                //         X   X
+                //         XXXXX
+                //
+                // isn't, as they arn't equential
+                //
+                // TODO mask
+                PRINT(orientation);
+                if( orientation == ss::array_orientation::vertical ){
+                        boost::sort( diff, [](auto const& l, auto const& r){ return l.second < r.second; } );
+                        size_t x{ diff.front().first };
+                        size_t y{ diff.front().second  };
+                        std::string rev_left;
+                                
+                        for( size_t z{ y }; z != 0; ){
+                                --z;
+                                if( next(x,z) == ' ')
+                                        break;
+                                rev_left += next(x,z);
+                        }
+                        std::string left{ rev_left.rbegin(), rev_left.rend() };
+                        
+                        std::string word{ left };
+
+                        for(; y < ctx.height && next(x,y) != ' '; ++y)
+                                word+=next(x,y);
+
+                        if( y <= diff.back().second ){
+                                ctx.log.push_back("tile placement not sequential");
+                                return EXIT_SUCCESS;
                         }
 
-                        placements.emplace_back( diff.front().first,
-                                                 diff.front().second,
-                                                 orientation,
-                                                 word,
-                                                 word);
+                        // special case, can place one tile as in
+                        //
+                        //              HAT
+                        //               T   <------ place this tile
+                        //               
+                        if( word.size() > 1){
+                                placements.emplace_back( diff.front().first,
+                                                         diff.front().second,
+                                                         orientation,
+                                                         word,
+                                                         word);
+                        }
+                        
+                } else{
+                        boost::sort( diff, [](auto const& l, auto const& r){ return l.first < r.first; } );
+                        size_t x{ diff.front().first };
+                        size_t y{ diff.front().second };
+                        
+                        std::string rev_left;
+                                
+                        for( size_t z{ x }; z != 0; ){
+                                --z;
+                                if( next(z,y) == ' ')
+                                        break;
+                                rev_left += next(z,y);
+                        }
+                        std::string left{ rev_left.rbegin(), rev_left.rend() };
+                        
+                        std::string word{ left };
+                        
+
+                        for(; x < ctx.height && next(x,y) != ' '; ++x){
+                                word+=next(x,y);
+                        }
+
+                        if( x <= diff.back().first ){
+                                ctx.log.push_back("tile placement not sequential");
+                                return EXIT_SUCCESS;
+                        }
+
+                        if( word.size() > 1){
+                                placements.emplace_back( diff.front().first,
+                                                         diff.front().second,
+                                                         orientation,
+                                                         word,
+                                                         word);
+                        }
                 }
+
+                // now check perpendicular ones
+                for( auto const& d : diff){
+                        if( orientation == ss::array_orientation::vertical ){
+                                // horizontal perpindicular
+                                size_t y{d.second};
+                                std::string rev_left; 
+                                std::string right;
+
+                                for( size_t x{ d.first }; x != 0; ){
+                                        --x;
+                                        if( next(x,y) == ' ')
+                                                break;
+                                        rev_left += next(x,y);
+                                }
+                                for(size_t x{d.first+1}; x < ctx.width; ++x){
+                                        if( next(x,y) == ' ')
+                                                break;
+                                        right += next(x,y);
+                                }
+                                std::string left{rev_left.rbegin(), rev_left.rend()};
+                                std::string word{ left + next(d.first, y ) + right };
+
+                                PRINT_SEQ((left)(right)(word));
+
+                                if( word.size() > 1){
+                                        placements.emplace_back( d.first - left.size(),
+                                                                 y,
+                                                                 ss::array_orientation::horizontal,
+                                                                 word,
+                                                                 word);
+                                }
+                        } else {
+                                // vertial perpindicular
+                                size_t x{d.first};
+                                std::string rev_left; 
+                                std::string right;
+
+                                for( size_t y{ d.second }; y != 0; ){
+                                        --y;
+                                        if( next(x,y) == ' ')
+                                                break;
+                                        rev_left += next(x,y);
+                                }
+                                for(size_t y{d.second+1}; y < ctx.width; ++y){
+                                        if( next(x, y) == ' ')
+                                                break;
+                                        right += next(x, y);
+                                }
+                                std::string left{rev_left.rbegin(), rev_left.rend()};
+                                std::string word{ left + next(x, d.second ) + right };
+
+                                PRINT_SEQ((left)(right)(word));
+
+                                if( word.size() > 1){
+                                        placements.emplace_back( x,
+                                                                 d.second - left.size(),
+                                                                 ss::array_orientation::horizontal,
+                                                                 word,
+                                                                 word);
+                                }
+                        }
+                }
+
+                // XXX can't place a single tile on first go
+
 
                 for( auto const& p : placements ){
                         if( ! ctx.dict_ptr->contains(p.get_word() ) ){
@@ -383,10 +507,38 @@ struct move : sub_command{
                 std::stringstream sstr;
                 sstr << "player " << ctx.active_player << " placed " << placements.front().get_word() << " at <" << diff.front().first << "," << diff.front().second << ">";
                 ctx.moves.emplace_back(sstr.str());
-
-                ++ctx.active_player;
-                ctx.active_player = ctx.active_player % ctx.players.size();
+                        
                 ctx.board = next;
+
+                for(;;){
+                        ++ctx.active_player;
+                        ctx.active_player = ctx.active_player % ctx.players.size();
+
+                        if( ctx.players[ctx.active_player].backend == "player")
+                                break;
+
+
+                        // player the au
+                        auto strat{ ss::strategy_factory::get_inst()->make("fast_solver") };
+                        auto metric{ ss::metric_factory::get_inst()->make("scrabble_metric") };
+                        ss::rack rack{ ctx.players[ctx.active_player].rack };
+                        std::vector<std::vector<ss::word_placement> > all_placements;
+                        strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
+                                       [&](std::vector<ss::word_placement> const& placements)mutable
+                                       {
+                                                std::cout << "yeild\n";
+                                                all_placements.push_back( placements );
+                                       });
+                        if( all_placements.size()){
+                                boost::sort( all_placements, [&metric](auto const& l, auto const& r){
+                                        return metric->calculate(l) < metric->calculate(r);
+                                });
+                                for( auto const& x : all_placements.back())
+                                        x.dump();
+                        }
+
+                }
+
 
 
                 return EXIT_SUCCESS;
@@ -413,8 +565,10 @@ int driver_main(int argc, char** argv){
         }
         std::ofstream of("scrabble.json");
         ctx.write(of);
+        ctx.write(std::cout);
         std::ofstream scof(ctx.scratch);
         ctx.render(scof);
+        ctx.render(std::cout);
         return EXIT_SUCCESS;
 }
 

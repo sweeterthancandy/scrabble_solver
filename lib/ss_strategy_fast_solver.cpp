@@ -19,7 +19,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-//#define ALGORITHM_DEBUG
+#define ALGORITHM_DEBUG
 
 #ifdef  PRINT_SEQ
 #undef  PRINT_SEQ
@@ -244,6 +244,13 @@
                                                 }
                                         }
                                 }
+
+                                #ifdef ALGORITHM_DEBUG
+                                std::cout << "start_vecs = {";
+                                for( auto const& p : start_vecs)
+                                        std::cout << "(" << get<0>(p) << ", " << get<1>(p) << "), ";
+                                std::cout << "}\n";
+                                #endif
 
 
                                 for( auto const& t : start_vecs){
