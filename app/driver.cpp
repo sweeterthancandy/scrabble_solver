@@ -9,6 +9,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace bpt = boost::property_tree;
 
@@ -52,6 +53,7 @@ void command_context::write(std::ostream& ostr)const{
         root.put("width", width);
         root.put("height", height);
         root.put("scratch", scratch);
+        root.put("dict", dict);
         for( auto const& item : log )
                 root.add("logs.log", item);
         for( auto const& item : moves )
@@ -73,6 +75,8 @@ void command_context::read(std::istream& ostr){
         bpt::read_json(ostr, root);
         bag = root.get<std::string>("bag");
         scratch = root.get<std::string>("scratch");
+        dict = root.get<std::string>("dict");
+        dict_ptr =  ss::dictionary_factory::get_inst()->make(dict);
         active_player = root.get<size_t>("active_player");
         width = root.get<size_t>("width");
         height = root.get<size_t>("height");
@@ -92,7 +96,6 @@ void command_context::read(std::istream& ostr){
         for( auto const& c : root.get_child("board") ){
                 //std::string l{ c.second.get<std::string>("line") };
                 std::string l{ c.second.data() };
-                PRINT(l);
                 for( size_t x=0;x!=l.size();++x){
                         board(x,y) = l[x];
                 }
@@ -102,12 +105,18 @@ void command_context::read(std::istream& ostr){
 void command_context::render(std::ostream& ostr)const{
         ostr << "          SCRABBLE\n";
         ostr << "\n";
+        ostr << std::string(5, ' ');
+        for(size_t i=0;i!=width;++i)
+                ostr << boost::lexical_cast<std::string>(i%10);
+        ostr << "\n";
         auto sv{ board.to_string_vec() };
+        int i{0};
         std::string top{ std::string(4,' ') + "+" + std::string(width,'-') + "+"};
 
         ostr << top << "\n";
         for( auto const& line : sv ){
-                ostr << "    |" << line << "|\n";
+                ostr << "   " << (i%10) << "|" << line << "|\n";
+                ++i;
         }
         ostr << top << "\n";
         ostr << "\n";
@@ -255,7 +264,7 @@ struct move : sub_command{
                 boost::copy( lines, std::ostream_iterator<std::string>(std::cout,"\n"));
 
                 ss::board next(ctx.width, ctx.height);
-                size_t y_offset{3};
+                size_t y_offset{4};
                 size_t x_offset{5};
                 for(size_t y=0;y!=ctx.height;++y){
                         for(size_t x=0;x!=ctx.height;++x){
@@ -271,20 +280,24 @@ struct move : sub_command{
                 //              ctx.board \setminus minus = {}
                 //
                 std::vector< std::pair< size_t, size_t> > diff;
-                bool board_empty{false};
+                bool board_empty{true};
                 for(size_t y=0;y!=ctx.height;++y){
                         for(size_t x=0;x!=ctx.height;++x){
 
-                                if( ctx.board(x,y) != '\0')
+                                if( ctx.board(x,y) == ' '){
+                                        if( next(x,y) != ctx.board(x,y) ){
+                                                diff.emplace_back(x,y);
+                                        }
+                                } else{
                                         board_empty = false;
-
-                                if( ctx.board(x,y) == '\0' && next(x,y) != ctx.board(x,y) ){
-                                        diff.emplace_back(x,y);
-                                } else if( ctx.board(x,y) != next(x,y) ){
-                                        // bad board
-                                        // just rerender 
-                                        ctx.log.push_back("bad board, re-rendering");
-                                        return EXIT_SUCCESS;
+                                        if( ctx.board(x,y) != next(x,y) ){
+                                                // bad board
+                                                // just rerender 
+                                                std::stringstream sstr;
+                                                sstr << "bad board, re-rendering <" << x << "," << y << ">";
+                                                ctx.log.push_back(sstr.str());
+                                                return EXIT_SUCCESS;
+                                        }
                                 }
                         }
                 }
@@ -310,38 +323,65 @@ struct move : sub_command{
                         return EXIT_SUCCESS;
                 }
 
+                std::vector<ss::word_placement> placements;
+
+                for( auto const& p : diff){
+                        std::cout << "{" << p.first << "," << p.second << "}\n";
+                }
+
                 if( board_empty ){
+
                         // first move, special case, just check moves sequential
                         if( orientation == ss::array_orientation::vertical ){
                                 boost::sort( diff, [](auto const& l, auto const& r){ return l.second < r.second; } );
                                 for(size_t i=0;i!=diff.size()-1;++i){
-                                        if( diff[i].second +1 != diff[i].second ){
-                                                ctx.log.push_back("invalid move");
+                                        if( diff[i].second +1 != diff[i+1].second ){
+                                                ctx.log.push_back("invalid move, not verital");
                                                 return EXIT_SUCCESS;
                                         }
                                 }
                         } else{
                                 boost::sort( diff, [](auto const& l, auto const& r){ return l.second < r.second; } );
+                                for( auto const& p : diff){
+                                        std::cout << "{" << p.first << "," << p.second << "}\n";
+                                }
                                 for(size_t i=0;i!=diff.size()-1;++i){
-                                        if( diff[i].first +1 != diff[i].first ){
-                                                ctx.log.push_back("invalid move");
+                                        if( diff[i].first +1 != diff[i+1].first ){
+                                                ctx.log.push_back("invalid move, not horizontal");
                                                 return EXIT_SUCCESS;
                                         }
                                 }
                         }
+
+                        if( boost::find_if( diff, [](auto const& p){ return p.first == 7 && p.second == 7; } ) == diff.end()){
+                                ctx.log.push_back("first move must cross the middle <8,8>");
+                                return EXIT_SUCCESS;
+                        }
+                
+                        std::string word;
+                        for( auto const& pos : diff ){
+                                word += next(pos.first, pos.second);
+                        }
+
+                        placements.emplace_back( diff.front().first,
+                                                 diff.front().second,
+                                                 orientation,
+                                                 word,
+                                                 word);
                 }
 
-                std::string word;
-                for( auto const& pos : diff ){
-                        word += next(pos.first, pos.second);
+                for( auto const& p : placements ){
+                        if( ! ctx.dict_ptr->contains(p.get_word() ) ){
+                                std::stringstream sstr;
+                                sstr << "invalid word [" << p.get_word() << "]";
+                                ctx.log.push_back(sstr.str());
+                                return EXIT_SUCCESS;
+                        }
                 }
-                if( ! ctx.dict_ptr->contains(word) ){
-                        ctx.log.push_back("invalid word");
-                        return EXIT_SUCCESS;
-                }
+
 
                 std::stringstream sstr;
-                sstr << "player " << ctx.active_player << " placed " << word << " at <" << diff.front().first << "," << diff.front().second << ">";
+                sstr << "player " << ctx.active_player << " placed " << placements.front().get_word() << " at <" << diff.front().first << "," << diff.front().second << ">";
                 ctx.moves.emplace_back(sstr.str());
 
                 ++ctx.active_player;

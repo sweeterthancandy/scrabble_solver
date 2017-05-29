@@ -6,6 +6,7 @@ endfu
 
 fu! Update()
         call system("./driver move")
+        silent! e!
 endfu
 
 autocmd BufWritePost scrabble.scratch call Update()
