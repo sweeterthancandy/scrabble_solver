@@ -139,6 +139,9 @@ void command_context::render(std::ostream& ostr)const{
 void command_context::apply_placements(std::vector<ss::word_placement> const& placements){
         auto score{ metric_ptr->calculate(placements) };
         for( auto const& p : placements ){
+                std::cout << p;
+        }
+        for( auto const& p : placements ){
                 size_t y{ p.get_y()};
                 size_t x{ p.get_x()};
                 auto word{ p.get_word() };
@@ -560,7 +563,6 @@ struct move : sub_command{
                         strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
                                        [&](std::vector<ss::word_placement> const& placements)mutable
                                        {
-                                                std::cout << "yeild\n";
                                                 all_placements.push_back( placements );
                                        });
                         PRINT(all_placements.size());
@@ -602,7 +604,7 @@ int driver_main(int argc, char** argv){
                 sub_command_factory::get()->print_help(argv[0]);
                 return EXIT_FAILURE;
         }
-        #if 1
+        #if 0
         std::ofstream of("scrabble.json");
         ctx.write(of);
         std::ofstream scof(ctx.scratch);

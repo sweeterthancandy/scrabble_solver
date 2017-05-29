@@ -86,19 +86,35 @@
                         ;
                         switch( orientation ){
                         case array_orientation::horizontal:
-                                make_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(x,y, array_orientation::horizontal, word, word);
+                                make_placement = [&](size_t x, size_t y, std::string word){
+                                        std::string mask;
+                                        for(size_t i=0;i!=word.size();++i){
+                                                mask += ( tile_traits::empty(brd(x+i,y)) ? word[i] : ' ');
+                                        }
+                                        return word_placement(x,y, array_orientation::horizontal, word, mask);
                                 };
-                                make_perp_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(x,y, array_orientation::vertical, word, word);
+                                make_perp_placement = [&](size_t x, size_t y, std::string word){
+                                        std::string mask;
+                                        for(size_t i=0;i!=word.size();++i){
+                                                mask += ( tile_traits::empty(brd(x,y+i)) ? word[i] : ' ');
+                                        }
+                                        return word_placement(x,y, array_orientation::vertical, word, mask);
                                 };
                                 break;
                         case array_orientation::vertical:
-                                make_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(y,x, array_orientation::vertical, word, word);
+                                make_placement = [&](size_t x, size_t y, std::string word){
+                                        std::string mask;
+                                        for(size_t i=0;i!=word.size();++i){
+                                                mask += ( tile_traits::empty(brd(y,x+i)) ? word[i] : ' ');
+                                        }
+                                        return word_placement(y,x, array_orientation::vertical, word, mask);
                                 };
-                                make_perp_placement = [](size_t x, size_t y, std::string word){
-                                        return word_placement(y,x, array_orientation::horizontal, word, word);
+                                make_perp_placement = [&](size_t x, size_t y, std::string word){
+                                        std::string mask;
+                                        for(size_t i=0;i!=word.size();++i){
+                                                mask += ( tile_traits::empty(brd(y+i,x)) ? word[i] : ' ');
+                                        }
+                                        return word_placement(y,x, array_orientation::horizontal, word, mask);
                                 };
                                 break;
                         }
