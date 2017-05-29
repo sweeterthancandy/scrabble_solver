@@ -16,6 +16,7 @@ namespace bpt = boost::property_tree;
 struct player_t{
         std::string backend;
         std::string rack;
+
 };
 
 struct command_context{
@@ -26,6 +27,7 @@ struct command_context{
         void write(std::ostream& ostr)const;
         void read(std::istream& ostr);
         void render(std::ostream& ostr)const;
+        void apply_placements(std::vector<ss::word_placement> const& placements);
 
         std::random_device rd;
         std::mt19937 gen;
@@ -44,6 +46,10 @@ struct command_context{
 
         std::string dict;
         std::shared_ptr<ss::dictionary_t> dict_ptr;
+
+        std::string metric;
+        std::shared_ptr<ss::metric> metric_ptr;
+
 };
         
 void command_context::write(std::ostream& ostr)const{
@@ -54,6 +60,7 @@ void command_context::write(std::ostream& ostr)const{
         root.put("height", height);
         root.put("scratch", scratch);
         root.put("dict", dict);
+        root.put("metric", metric);
         for( auto const& item : log )
                 root.add("logs.log", item);
         for( auto const& item : moves )
@@ -77,6 +84,8 @@ void command_context::read(std::istream& ostr){
         scratch = root.get<std::string>("scratch");
         dict = root.get<std::string>("dict");
         dict_ptr =  ss::dictionary_factory::get_inst()->make(dict);
+        metric = root.get<std::string>("metric");
+        metric_ptr =  ss::metric_factory::get_inst()->make(metric);
         active_player = root.get<size_t>("active_player");
         width = root.get<size_t>("width");
         height = root.get<size_t>("height");
@@ -126,6 +135,29 @@ void command_context::render(std::ostream& ostr)const{
         boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
         ostr << "\nmoves:\n    ";
         boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
+}
+void command_context::apply_placements(std::vector<ss::word_placement> const& placements){
+        auto score{ metric_ptr->calculate(placements) };
+        for( auto const& p : placements ){
+                size_t y{ p.get_y()};
+                size_t x{ p.get_x()};
+                auto word{ p.get_word() };
+                if( p.get_orientation() == ss::array_orientation::horizontal ){
+                        for(size_t i{0};i!=word.size();++i){
+                                board(x +i, y) = word[i];
+                        }
+                } else{
+                        for(size_t i{0};i!=word.size();++i){
+                                board(x, y+i) = word[i];
+                        }
+                }
+        }
+        std::stringstream sstr;
+        sstr << "player " << active_player << " placed " << placements.front().get_word() << " at <" << placements.front().get_x() << "," << placements.front().get_y() << "> for " << score << " points";
+        moves.emplace_back(sstr.str());
+        ++active_player;
+        active_player = active_player % players.size();
+
 }
 
 struct sub_command{
@@ -209,6 +241,7 @@ struct init : sub_command{
                 ctx.bag.resize( ctx.bag.size() - 7 );
                 ctx.active_player = 0;
                 ctx.dict = "regular";
+                ctx.metric = "scrabble_metric";
                 
                 ctx.log.push_back( "create new game");
                 ctx.moves.push_back( "start");
@@ -503,16 +536,18 @@ struct move : sub_command{
                         }
                 }
 
+                ctx.apply_placements( placements );
 
+
+                #if 0
                 std::stringstream sstr;
                 sstr << "player " << ctx.active_player << " placed " << placements.front().get_word() << " at <" << diff.front().first << "," << diff.front().second << ">";
                 ctx.moves.emplace_back(sstr.str());
                         
                 ctx.board = next;
+                #endif
 
                 for(;;){
-                        ++ctx.active_player;
-                        ctx.active_player = ctx.active_player % ctx.players.size();
 
                         if( ctx.players[ctx.active_player].backend == "player")
                                 break;
@@ -520,7 +555,6 @@ struct move : sub_command{
 
                         // player the au
                         auto strat{ ss::strategy_factory::get_inst()->make("fast_solver") };
-                        auto metric{ ss::metric_factory::get_inst()->make("scrabble_metric") };
                         ss::rack rack{ ctx.players[ctx.active_player].rack };
                         std::vector<std::vector<ss::word_placement> > all_placements;
                         strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
@@ -529,12 +563,17 @@ struct move : sub_command{
                                                 std::cout << "yeild\n";
                                                 all_placements.push_back( placements );
                                        });
+                        PRINT(all_placements.size());
                         if( all_placements.size()){
-                                boost::sort( all_placements, [&metric](auto const& l, auto const& r){
-                                        return metric->calculate(l) < metric->calculate(r);
+                                boost::sort( all_placements, [&](auto const& l, auto const& r){
+                                        return ctx.metric_ptr->calculate(l) < ctx.metric_ptr->calculate(r);
                                 });
+
+                                ctx.apply_placements( all_placements.back() );
+                                #if 0
                                 for( auto const& x : all_placements.back())
                                         x.dump();
+                                #endif
                         }
 
                 }
@@ -563,11 +602,13 @@ int driver_main(int argc, char** argv){
                 sub_command_factory::get()->print_help(argv[0]);
                 return EXIT_FAILURE;
         }
+        #if 1
         std::ofstream of("scrabble.json");
         ctx.write(of);
-        ctx.write(std::cout);
         std::ofstream scof(ctx.scratch);
         ctx.render(scof);
+        #endif
+        ctx.write(std::cout);
         ctx.render(std::cout);
         return EXIT_SUCCESS;
 }

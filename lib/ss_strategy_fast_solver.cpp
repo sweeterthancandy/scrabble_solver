@@ -5,6 +5,7 @@
 #include "ss_util.h"
 #include "ss_io.h"
 #include "ss_word_placement.h"
+#include "ss_tile_traits.h"
 
 #include <iostream>
 #include <fstream>
@@ -19,7 +20,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#define ALGORITHM_DEBUG
+//#define ALGORITHM_DEBUG
 
 #ifdef  PRINT_SEQ
 #undef  PRINT_SEQ
@@ -168,26 +169,26 @@
                                 int sigma = 0;
 
                                 for(size_t j=0;j!=width;++j){
-                                        if( current_line[j] != '\0')
+                                        if( tile_traits::not_empty(current_line[j]) )
                                                 continue;
                                         // this is a possible move
                                         std::string left;
                                         std::string right;
                                         for(size_t k=i;k!=0;){
                                                 --k;
-                                                if( board_lines[k][j] == '\0'){
+                                                if( tile_traits::empty(board_lines[k][j])){
                                                         break;
                                                 }
                                                 left += board_lines[k][j];
                                         }
                                         for(size_t k=i+1;k < width;++k){
-                                                if( board_lines[k][j] == '\0'){
+                                                if( tile_traits::empty(board_lines[k][j])){
                                                         break;
                                                 }
                                                 right += board_lines[k][j];
                                         }
-                                        int is_start = ( j     != 0           && current_line[j-1] != '\0' ) ||
-                                                       ( j + 1 != current_line.size() && current_line[j+1] != '\0' ) ||
+                                        int is_start = ( j     != 0           && tile_traits::not_empty(current_line[j-1]) ) ||
+                                                       ( j + 1 != current_line.size() && tile_traits::not_empty(current_line[j+1]) ) ||
                                                        left.size() || 
                                                        right.size();
 
@@ -265,7 +266,7 @@
 
                                         for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
                                                 --j;
-                                                if( current_line[j] == '\0')
+                                                if( tile_traits::empty(current_line[j]))
                                                         break;
                                                 prefix += current_line[j];
                                         }
