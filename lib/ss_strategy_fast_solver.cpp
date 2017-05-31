@@ -20,7 +20,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#define ALGORITHM_DEBUG
+//#define ALGORITHM_DEBUG
 
 #ifdef  PRINT_SEQ
 #undef  PRINT_SEQ

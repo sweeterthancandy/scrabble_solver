@@ -47,8 +47,6 @@ int driver_main(int argc, char** argv){
         std::ofstream scof(ctx.scratch);
         ctx.render(scof);
         #endif
-        ctx.write(std::cout);
-        ctx.render(std::cout);
         return EXIT_SUCCESS;
 }
 

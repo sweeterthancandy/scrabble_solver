@@ -16,13 +16,13 @@ namespace ss{
                 using fac_type = std::function<ptr_type(DeclArgs...)>;
 
                 generic_factory& register_(std::string const& token, fac_type fac){
-                        std::cout << "(" << this << ")register_(" << token << ")\n";
+                        //std::cout << "(" << this << ")register_(" << token << ")\n";
 			protos_.insert(std::make_pair(token, std::move(fac)));
 			return *this;
 		}
 		template<class... Args>
 		std::shared_ptr<T> make(std::string const& token, Args const... args){
-                        std::cout << "(" << this << ")find(" << token << ")\n";
+                        //std::cout << "(" << this << ")find(" << token << ")\n";
 			auto iter = protos_.find(token);
 			if( iter == protos_.end() ){
                                 std::stringstream sstr;
