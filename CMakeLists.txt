@@ -6,6 +6,8 @@ set(CMAKE_CXX_FLAGS "-std=c++14")
 aux_source_directory(lib lib_sources)
 aux_source_directory(test test_sources)
 
+aux_source_directory(app/driver/ driver_sources)
+
 add_library(ss_lib SHARED ${lib_sources})
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
@@ -21,7 +23,7 @@ target_link_libraries(ss ss_lib)
 add_executable(solver app/solver.cpp)
 target_link_libraries(solver ss_lib)
 
-add_executable(driver app/driver.cpp)
+add_executable(driver ${driver_sources})
 target_link_libraries(driver ss_lib)
 
 add_executable(ss_test ${test_sources})
