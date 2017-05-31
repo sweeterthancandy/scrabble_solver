@@ -20,7 +20,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-//#define ALGORITHM_DEBUG
+#define ALGORITHM_DEBUG
 
 #ifdef  PRINT_SEQ
 #undef  PRINT_SEQ
@@ -156,6 +156,18 @@
                                    if one of the blank tiles is one of those marked above. 
                                    
 
+                                        Also cache the prefix, ie, doe (4,2), we have left = TW, right = N
+
+                                                                0123456789
+                                                               +----------+
+                                                               |    T     | 0
+                                                               |    W     | 1
+                                                               |          | 2
+                                                               |    N     | 3
+                                                               +----------+
+
+                                   
+
                                  */
 
                                 std::vector<std::tuple<int, int, std::string, std::string> > moves;
@@ -196,6 +208,9 @@
 
                                         left = std::string(left.rbegin(),left.rend());
                                         moves.emplace_back( std::forward_as_tuple( j, is_start, std::move(left), std::move(right)));
+
+
+                                        // also calculate the sigma
                                         sum.emplace_back(sigma);
                                         sigma += is_start;
                                 }
@@ -235,6 +250,7 @@
                                 std::vector<std::tuple<size_t, size_t> > start_vecs;
                                 //for(size_t j=0;j + n <= moves.size(); ++j){
                                 for(size_t j=0;j < width; ++j){
+                                        // as word of lengh n long enough to cover a start tile?
                                         for(size_t n=1;
                                             j+n <= moves.size() && n <= rck.size();
                                             ++n){
@@ -255,6 +271,7 @@
 
 
                                 for( auto const& t : start_vecs){
+
                                         auto start = get<0>(t);
                                         auto min_n = get<1>(t);
                                         auto const& start_move(moves[start]);
@@ -276,7 +293,8 @@
                                         io::board_renderer r(brd, orientation);
                                         r.title("starting solve_")
                                                 .mark_row(i)
-                                                .put_tag("start", start)
+                                                .put_tag("x", start)
+                                                .put_tag("y", i)
                                                 .put_tag("start_move", get<Ele_Idx>(start_move))
                                                 .put_tag("prefix", prefix)
                                                 .put_tag("min_n", min_n)
@@ -301,6 +319,7 @@
                                         };
 
                                         stack.emplace_back( std::move(prefix), std::vector<word_placement>{}, start, rck);
+
                                         for(; stack.size();){
                                                 auto item = stack.back();
                                                 stack.pop_back();
@@ -319,8 +338,7 @@
                                                         #endif // ALGORITHM_DEBUG
                                                 };
 
-                                                // terminal
-
+                                                // check a least the prefix is valid
                                                 if( get<Item_Word>(item).size() >= 2 && ! dict.contains_prefix( get<Item_Word>(item) )){
                                                         cmt("not a prefix " + get<Item_Word>(item));
                                                         continue;
@@ -331,6 +349,7 @@
 
                                                 //PRINT_SEQ((get<Item_Word>(item))(get<Item_MoveIdx>(item))(get<Item_Rack>(item)));
 
+                                                // is this enought to be a valid word
                                                 if( delta >= min_n ){
                                                         // terminal
                                                         auto word = get<Item_Word>(item);
@@ -441,7 +460,7 @@
                                                         std::string next_suffix{ get<Item_Word>(item) + t + suffix };
 
                                                         std::string perp_word;
-                                                        auto perps = std::move(get<Item_Perps>(item));
+                                                        auto perps = get<Item_Perps>(item);
 
                                                         if( current_move_suffix.size() || current_move_prefix.size() ){
                                                                 perp_word = current_move_prefix;
@@ -459,9 +478,6 @@
                                                                 }
 
                                                                 size_t y_offset;
-
-
-
                                                         }
 
                                                         if( perp_word.size() ){

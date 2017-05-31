@@ -4,6 +4,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "ss.h"
+
 namespace bpt = boost::property_tree;
 
 void game_context::write(std::ostream& ostr)const{
@@ -95,15 +97,22 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         auto score{ metric_ptr->calculate(placements) };
 
         auto& p{ players[active_player] };
+        
+        for( auto const& p : placements ){
+                std::cout << p;
+        }
 
         std::vector<char> to_remove;
+        PRINT(placements.front().get_mask() );
         for( char c : placements.front().get_mask() ){
                 if( ss::tile_traits::not_empty(c) ){
+                        PRINT( p.rack );
                         auto iter{ p.rack.find(c) };
                         assert( iter != std::string::npos && "unexpected");
                         p.rack.erase(iter, 1);
                 }
         }
+        PRINT( p.rack );
                         
         for(;p.rack.size() < 7 && bag.size();){
                 p.rack += bag.back();
@@ -111,9 +120,6 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         }
 
 
-        for( auto const& p : placements ){
-                std::cout << p;
-        }
         // need to calculate tiles used without double counting
 
         for( auto const& p : placements ){

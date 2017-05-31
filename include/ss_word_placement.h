@@ -44,8 +44,8 @@ namespace ss{
                 auto get_mask()const{ return mask_; }
                 void dump(std::ostream& ostr = std::cout)const{
                         ostr << "{"
-                                << "(" << x_ << "," << y_ << "), "
-                                << word_ << ", " << mask_ << "}\n";
+                                << "(" << orientation_ << ", " << x_ << "," << y_ << "), "
+                                << word_ << ", " << mask_ << "}";
                 }
                 friend std::ostream& operator<<(std::ostream& ostr, word_placement const& self){
                         self.dump(ostr);
