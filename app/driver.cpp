@@ -147,10 +147,10 @@ void command_context::apply_placements(std::vector<ss::word_placement> const& pl
                 if( ss::tile_traits::not_empty(c) ){
                         auto iter{ p.rack.find(c) };
                         assert( iter != std::string::npos && "unexpected");
-                        p.rack.erase(iter);
+                        p.rack.erase(iter, 1);
                 }
         }
-
+                        
         for(;p.rack.size() < 7 && bag.size();){
                 p.rack += bag.back();
                 bag.pop_back();
