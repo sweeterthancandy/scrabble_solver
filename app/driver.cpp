@@ -446,7 +446,7 @@ struct move : sub_command{
                                         make_word_placement(
                                                 ctx.board,
                                                 diff.front().first,
-                                                diff.front().second,
+                                                diff.front().second - left.size(),
                                                 orientation,
                                                 word) );
                         }
@@ -482,7 +482,7 @@ struct move : sub_command{
                                 placements.emplace_back( 
                                         make_word_placement(
                                                 ctx.board,
-                                                diff.front().first,
+                                                diff.front().first - left.size(),
                                                 diff.front().second,
                                                 orientation,
                                                 word));
