@@ -20,69 +20,39 @@ fu! MarkStart(x, y)
 endfu
 
 function! Complete(findstart, base)
-        let l:line = getline('.')
-        let l:start = col('.')
-        let l:l = line('.')
 
-        let l:start -= 1
-
-        " first find first non blank
-        while l:start > 0 && l:line[l:start] =~ '\s'
-                let l:start -= 1
-        endwhile
-
-        let l:word_start = l:start 
-        while l:word_start > 0 && l:line[l:word_start - 1] =~ '\w'
-                let l:word_start -= 1
-        endwhile
-        
-        let l:start += 1
+        let l:sc = VimToScrabble(col('.'), line('.'))
 
         if a:findstart == 1
-                call MarkStart(l:start, line('.'))
-                return l:start
+                return g:scrabble_xo - 1
         endif
-        echom l:start
 
-        echom a:base
+        let l:line = deepcopy(getline('.'))
 
-        "call setline('.', l:line[0:(l:start)])
-   
-        let l:scrabble_cords = VimToScrabble(l:start, l:l )
+        call setline('.', l:line[0:(g:scrabble_xo)])
 
-        let l:the_command = 'complete --x ' . l:scrabble_cords[0] . ' --y ' . l:scrabble_cords[1] 
-        echom l:the_command
+
+        let l:the_command = 'complete'
         let l:raw_input = system('./driver '. l:the_command)
         let l:input_lines = split(l:raw_input, "\n")
 
-        let l:offset = l:start - l:word_start
-	    
-        echom l:word_start
-        echom l:start
-        echom l:offset
-        
         let l:ret = []
-   
+
         for l:input_line in l:input_lines
                 echom l:input_line
                 let l:item = json_decode(l:input_line)
 
-                if l:item.orientation ==# "horizontal" 
-                        let l:suffix = l:item.word[(l:offset):]
-                        call add(l:ret, l:suffix)
+                if l:item.orientation ==# "horizontal"
+                        if l:item.y == l:sc[1]
+                                "let l:cand = l:line[(g:scrabble_xo):(l:item.x)]
+                                let l:cand = repeat(' ', l:item.x)
+                                let l:cand .= l:item.word
+                                call add(l:ret, l:cand)
+                        endif
                 endif
-
-                "if l:item.orientation ==# "horizontal" 
-                        "if complete_add(l:item) == 0
-                        ""if complete_add({"word":(l:item.word)}) == 0
-                           "return []
-                        "endif
-                "endif
-                "if complete_check()
-                   "return []
-                "endif
         endfor
 
+        echom len(l:ret)
         return l:ret
 
 endfu
@@ -106,6 +76,8 @@ fu! Init()
         call TileAdd('red', g:scrabble_xo     , g:scrabble_yo + 14)
         call TileAdd('red', g:scrabble_xo + 7 , g:scrabble_yo + 14)
         call TileAdd('red', g:scrabble_xo + 14, g:scrabble_yo + 14)
+
+        call setpos('.', [0, g:scrabble_yo + 4, g:scrabble_xo + 5, 0])
 endfu
 
 fu! Update()

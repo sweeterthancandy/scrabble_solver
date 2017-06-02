@@ -314,11 +314,10 @@
                                                 Item_Word,
                                                 Item_Perps,
                                                 Item_MoveIdx,
-                                                Item_Rack,
-                                                Item_Depth
+                                                Item_Rack
                                         };
 
-                                        stack.emplace_back( std::move(prefix), std::vector<word_placement>{}, start, rck);
+                                        stack.emplace_back( prefix, std::vector<word_placement>{}, start, rck);
 
                                         for(; stack.size();){
                                                 auto item = stack.back();
@@ -366,7 +365,10 @@
 
                                                         if( ret ){
                                                                 std::vector<word_placement> placements;
-                                                                placements.push_back( make_placement(start, i, word));
+                                                                placements.push_back(
+                                                                        make_placement(
+                                                                                get<Ele_Idx>(start_move) - prefix.size(),
+                                                                                i, word));
                                                                 boost::copy( get<Item_Perps>(item), std::back_inserter(placements));
 
                                                                 f(placements);
