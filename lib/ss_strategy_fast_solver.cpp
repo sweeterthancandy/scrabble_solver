@@ -271,7 +271,7 @@
                                 // {start, min tiles}
                                 std::vector<std::tuple<size_t, size_t> > start_vecs;
                                 //for(size_t j=0;j + n <= moves.size(); ++j){
-                                for(size_t j=0;j < width; ++j){
+                                for(size_t j=0;j < moves.size(); ++j){
                                         // as word of lengh n long enough to cover a start tile?
                                         for(size_t n=1;
                                             j+n <= moves.size() && n <= rck.size();
@@ -294,37 +294,16 @@
 
                                 for( auto const& t : start_vecs){
 
-                                        auto start = get<0>(t);
+                                        auto move_idx = get<0>(t);
                                         auto min_n = get<1>(t);
-                                        auto const& start_move(moves[start]);
 
-                                        std::string prefix;
-                                        for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
-                                                --j;
-                                                if( tile_traits::empty(current_line[j]))
-                                                        break;
-                                                prefix += current_line[j];
-                                        }
-                                        prefix = std::string(prefix.rbegin(), prefix.rend());
+                                        auto const& start_move(moves[move_idx]);
+                                        std::string prefix{ get<Ele_Prefix>(start_move) };
+
+                                        auto word_start = get<Ele_Idx>(start_move) - prefix.size();
+
+                                        PRINT_SEQ((move_idx)(min_n)(prefix));
                                         
-
-                                        auto word_start = start - prefix.size();
-
-                                        PRINT_SEQ((start)(min_n)(prefix));
-                                        
-                                        #ifdef ALGORITHM_DEBUG
-                                        io::board_renderer r(brd, orientation);
-                                        r.title("starting solve_")
-                                                .mark_row(i)
-                                                .put_tag("x", start)
-                                                .put_tag("y", i)
-                                                .put_tag("start_move", get<Ele_Idx>(start_move))
-                                                .put_tag("prefix", prefix)
-                                                .put_tag("min_n", min_n)
-                                                ;
-                                        #endif
-
-
                                         std::vector<
                                                 std::tuple<
                                                         std::string,
@@ -340,13 +319,16 @@
                                                 Item_Rack
                                         };
 
-                                        stack.emplace_back( prefix, std::vector<word_placement>{}, start, rck);
+                                        stack.emplace_back( prefix, std::vector<word_placement>{}, move_idx, rck);
 
                                         for(; stack.size();){
+
                                                 auto item = stack.back();
                                                 stack.pop_back();
+
                                                 auto current_idx {get<Item_MoveIdx>(item)};
-                                                auto delta{current_idx - start};
+                                                // how many tiles have i placed?
+                                                auto delta{current_idx - move_idx};
                                         
                                                 auto cmt = [&](std::string const& comment){
                                                         #ifdef ALGORITHM_DEBUG
@@ -356,7 +338,7 @@
                                                         }
                                                         s += comment;
                                                         s += "(delta=" + boost::lexical_cast<std::string>(delta) + ")";
-                                                        r.comment(s);
+                                                        std::cout << s << "\n";
                                                         #endif // ALGORITHM_DEBUG
                                                 };
 
@@ -378,7 +360,7 @@
 
                                                         bool ret = dict.contains(word);
 
-                                                        //PRINT_SEQ((ret)(i)(n)(start)(word));
+                                                        //PRINT_SEQ((ret)(i)(n)(move_idx)(word));
 
                                                         if( ret ){
                                                                 cmt( "found word : " + word);
@@ -434,8 +416,6 @@
 
                                                 */
 
-                                                std::string current_move_suffix{get<Ele_Right>(current_move)};
-                                                std::string current_move_prefix{get<Ele_Left>(current_move)};
 
 
                                                 /*
@@ -462,35 +442,23 @@
 
                                                    
                                                  */
-                                                std::string suffix;
 
-                                                //PRINT_SEQ((current_move_prefix)(current_move_suffix));
-
-                                                if( current_idx + 1 < moves.size() ){
-
-                                                        auto cpy_start{get<Ele_Idx>(moves[current_idx]) +1},
-                                                             cpy_end  {get<Ele_Idx>(moves[current_idx +1])};
-                                                        //PRINT_SEQ((cpy_start)(cpy_end));
-                                                        for(;
-                                                            cpy_start!=cpy_end;
-                                                            ++cpy_start)
-                                                        {
-                                                                suffix += current_line[cpy_start];
-                                                        }
-                                                }
-
+                                                std::string current_move_right{get<Ele_Right>(current_move)};
+                                                std::string current_move_left{get<Ele_Left>(current_move)};
+                                                std::string current_move_prefix{get<Ele_Prefix>(current_move)};
+                                                std::string current_move_suffix{get<Ele_Suffix>(current_move)};
 
                                                 for( auto t : current_rack.make_tile_set() )
                                                 {
-                                                        std::string next_suffix{ get<Item_Word>(item) + t + suffix };
+                                                        std::string next_suffix{ get<Item_Word>(item) + t + current_move_suffix };
 
                                                         std::string perp_word;
                                                         auto perps = get<Item_Perps>(item);
 
-                                                        if( current_move_suffix.size() || current_move_prefix.size() ){
-                                                                perp_word = current_move_prefix;
+                                                        if( current_move_right.size() || current_move_left.size() ){
+                                                                perp_word = current_move_left;
                                                                 perp_word += t;
-                                                                perp_word += current_move_suffix;
+                                                                perp_word += current_move_right;
                                                                 bool ret = dict.contains(perp_word);
                                                                 //PRINT_SEQ((ret)(perp_word));
                                                                 if( ret ){
@@ -501,15 +469,13 @@
                                                                 if( ! ret ){
                                                                         continue;
                                                                 }
-
-                                                                size_t y_offset;
                                                         }
 
                                                         if( perp_word.size() ){
                                                                 perps.emplace_back(
                                                                         make_perp_placement( 
                                                                                 word_start + get<Item_Word>(item).size(),
-                                                                                i - current_move_prefix.size(),
+                                                                                i - current_move_left.size(),
                                                                                 perp_word) );
                                                         }
 
@@ -521,9 +487,6 @@
 
                                                 }
                                         }
-                                        #ifdef ALGORITHM_DEBUG
-                                        r.display();
-                                        #endif
                                 }
                         }
                 }
