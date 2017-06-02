@@ -170,22 +170,25 @@
 
                                  */
 
-                                std::vector<std::tuple<int, int, std::string, std::string> > moves;
+                                std::vector<std::tuple<int, int, std::string, std::string, std::string, std::string> > moves;
                                 enum{
                                         Ele_Idx,
                                         Ele_Start,
                                         Ele_Left,
-                                        Ele_Right
+                                        Ele_Right,
+                                        Ele_Prefix,
+                                        Ele_Suffix 
                                 };
-                                std::vector<int> sum;
-                                int sigma = 0;
+                                std::vector<int> sum{0};
 
                                 for(size_t j=0;j!=width;++j){
-                                        if( tile_traits::not_empty(current_line[j]) )
+                                        if( tile_traits::not_empty(board_lines[i][j]) )
                                                 continue;
                                         // this is a possible move
                                         std::string left;
                                         std::string right;
+                                        
+
                                         for(size_t k=i;k!=0;){
                                                 --k;
                                                 if( tile_traits::empty(board_lines[k][j])){
@@ -199,6 +202,24 @@
                                                 }
                                                 right += board_lines[k][j];
                                         }
+                                        
+                                        // suffix is tiles right of this move, is empty when the
+                                        // next is a blan
+                                        std::string suffix;
+                                        std::string prefix;
+                                        for(size_t k=j;k!=0;){
+                                                --k;
+                                                if( tile_traits::empty(board_lines[i][k]))
+                                                        break;
+                                                prefix += board_lines[i][k];
+                                        }
+                                        for(size_t k=j+1;k +1 <width;++k){
+                                                if( tile_traits::empty(board_lines[i][k]))
+                                                        break;
+                                                suffix += board_lines[i][k];
+                                        }
+
+
                                         int is_start = ( j     != 0           && tile_traits::not_empty(current_line[j-1]) ) ||
                                                        ( j + 1 != current_line.size() && tile_traits::not_empty(current_line[j+1]) ) ||
                                                        left.size() || 
@@ -207,15 +228,16 @@
                                         PRINT_SEQ((j)(left)(left)(is_start));
 
                                         left = std::string(left.rbegin(),left.rend());
-                                        moves.emplace_back( std::forward_as_tuple( j, is_start, std::move(left), std::move(right)));
+                                        prefix = std::string(prefix.rbegin(),prefix.rend());
+
+                                        moves.emplace_back( std::forward_as_tuple( j, is_start,
+                                                                                   std::move(left), std::move(right), 
+                                                                                   std::move(prefix),std::move(suffix)));
 
 
                                         // also calculate the sigma
-                                        sum.emplace_back(sigma);
-                                        sigma += is_start;
+                                        sum.emplace_back(sum.back() + is_start);
                                 }
-                                sum.emplace_back(sigma);
-
 
                                 /*
 
