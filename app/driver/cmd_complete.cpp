@@ -8,6 +8,7 @@
 
 namespace{
 
+
 struct complete : sub_command{
         virtual int run(game_context& ctx, std::vector<std::string> const& args){
                 do{
@@ -19,6 +20,23 @@ struct complete : sub_command{
                 boost::optional<int> y;
                 std::function<bool(std::vector<ss::word_placement> const&)> f{
                         [](std::vector<ss::word_placement> const& _){ return true; }};
+
+                auto printer = [](std::ostream& ostr, auto const& _){
+                        ostr
+                                << "{ "
+                                << "\"word\":\"" << _.get_word() << "\""
+                                << ", \"x\":" << _.get_x()
+                                << ", \"y\":" << _.get_y()
+                                << ", \"orientation\":" << "\"" << _.get_orientation() << "\""
+                                << " }";
+                };
+
+                std::function<void(std::vector<ss::word_placement> const&)> consumer{
+                        [&](std::vector<ss::word_placement> const& _){
+                                printer(std::cout, _.front());
+                                std::cout << "\n";
+                        }
+                };
 
                 for(size_t i=2;i<args.size();){
                         size_t d{ args.size() - i };
@@ -36,6 +54,18 @@ struct complete : sub_command{
                                 }
                                 // fall
                         case 1:
+                                if( args[i] == "--all" ){
+                                        consumer =  
+                                                [&](std::vector<ss::word_placement> const& _){
+                                                        for(auto const& p : _ ){
+                                                                printer(std::cout, p);
+                                                                std::cout << ",";
+                                                        }
+                                                        std::cout << "\n";
+                                                };
+                                        i+=1;
+                                        continue;
+                                }
                                 BOOST_THROW_EXCEPTION(std::domain_error("expected --x <x> --y <y>"));
                         }
                 }
@@ -55,24 +85,9 @@ struct complete : sub_command{
                 strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
                                [&](std::vector<ss::word_placement> const& placements)mutable
                                {
-                                        #if 1
                                         if( f(placements) ) {
-                                                std::cout 
-                                                        << "{ "
-                                                                        << "\"word\":\"" << placements.front().get_word() << "\""
-                                                                        << ", \"x\":" << placements.front().get_x()
-                                                                        << ", \"y\":" << placements.front().get_y()
-                                                                        << ", \"orientation\":" << "\"" << placements.front().get_orientation() << "\""
-                                                        << " }\n";
+                                                consumer(placements);
                                         }
-                                        #endif
-                                        #if 0
-                                        std::cout << "[";
-                                        for( auto const& p : placements ){
-                                                std::cout << p << ", ";
-                                        }
-                                        std::cout << "]\n";
-                                        #endif
                                });
 
                 return EXIT_SUCCESS;

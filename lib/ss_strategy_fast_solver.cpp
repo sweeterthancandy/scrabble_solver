@@ -275,12 +275,8 @@
                                         auto start = get<0>(t);
                                         auto min_n = get<1>(t);
                                         auto const& start_move(moves[start]);
+
                                         std::string prefix;
-
-                                        auto word_start = start - prefix.size();
-
-                                        PRINT_SEQ((start)(min_n)(prefix));
-
                                         for( size_t j= get<Ele_Idx>(start_move); j != 0; ){
                                                 --j;
                                                 if( tile_traits::empty(current_line[j]))
@@ -288,6 +284,11 @@
                                                 prefix += current_line[j];
                                         }
                                         prefix = std::string(prefix.rbegin(), prefix.rend());
+                                        
+
+                                        auto word_start = start - prefix.size();
+
+                                        PRINT_SEQ((start)(min_n)(prefix));
                                         
                                         #ifdef ALGORITHM_DEBUG
                                         io::board_renderer r(brd, orientation);
@@ -367,7 +368,7 @@
                                                                 std::vector<word_placement> placements;
                                                                 placements.push_back(
                                                                         make_placement(
-                                                                                get<Ele_Idx>(start_move) - prefix.size(),
+                                                                                word_start,
                                                                                 i, word));
                                                                 boost::copy( get<Item_Perps>(item), std::back_inserter(placements));
 

@@ -24,12 +24,10 @@ function! Complete(findstart, base)
         let l:sc = VimToScrabble(col('.'), line('.'))
 
         if a:findstart == 1
+                let g:current_line = getline('.')
+                call setline('.', getline('.')[0:(g:scrabble_xo)])
                 return g:scrabble_xo - 1
         endif
-
-        let l:line = deepcopy(getline('.'))
-
-        call setline('.', l:line[0:(g:scrabble_xo)])
 
 
         let l:the_command = 'complete'
@@ -39,20 +37,29 @@ function! Complete(findstart, base)
         let l:ret = []
 
         for l:input_line in l:input_lines
-                echom l:input_line
                 let l:item = json_decode(l:input_line)
 
                 if l:item.orientation ==# "horizontal"
                         if l:item.y == l:sc[1]
-                                "let l:cand = l:line[(g:scrabble_xo):(l:item.x)]
-                                let l:cand = repeat(' ', l:item.x)
-                                let l:cand .= l:item.word
+                                let l:cand = ''
+                                echom g:current_line
+                                for l:i in range(g:scrabble_xlen)
+                                        if l:item.x <= l:i && l:i < l:item.x + len(l:item.word)
+                                                let l:cand .= l:item.word[ l:i - l:item.x]
+                                        else
+                                                let l:cand .= g:current_line[g:scrabble_xo-1 + l:i]
+                                        endif
+                                endfor
+                                let l:cand .= '|'
                                 call add(l:ret, l:cand)
                         endif
                 endif
         endfor
 
-        echom len(l:ret)
+        if len(l:ret) == 0
+                call setline('.', g:current_line)
+        endif
+
         return l:ret
 
 endfu
