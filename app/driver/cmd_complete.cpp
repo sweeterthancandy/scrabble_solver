@@ -57,7 +57,13 @@ struct complete : sub_command{
                                {
                                         #if 1
                                         if( f(placements) ) {
-                                                std::cout << "{ \"word\":\"" << placements.front().get_word() << "\"}\n";
+                                                std::cout 
+                                                        << "{ "
+                                                                        << "\"word\":\"" << placements.front().get_word() << "\""
+                                                                        << ", \"x\":" << placements.front().get_x()
+                                                                        << ", \"y\":" << placements.front().get_y()
+                                                                        << ", \"orientation\":" << "\"" << placements.front().get_orientation() << "\""
+                                                        << " }\n";
                                         }
                                         #endif
                                         #if 0

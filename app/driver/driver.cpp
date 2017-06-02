@@ -1,29 +1,8 @@
 #include <cstring>
-
-#if 0
-#include "ss.h"
-#include "ss_util.h"
-#include "ss_dict.h"
-#include "ss_board_util.h"
-
-#include <tuple>
-#include <random>
-
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/lexical_cast.hpp>
-
-namespace bpt = boost::property_tree;
-
-
-
-#endif
-
 #include <fstream>
 
 #include "sub_command.h"
 #include "game_context.h"
-
 
 
 int driver_main(int argc, char** argv){
@@ -39,7 +18,6 @@ int driver_main(int argc, char** argv){
         } catch(std::exception const& e){
                 std::cerr << e.what() << "\n";
                 sub_command_factory::get()->print_help(argv[0]);
-                return EXIT_FAILURE;
         }
         #if 1
         std::ofstream of("scrabble.json");
