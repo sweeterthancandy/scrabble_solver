@@ -1,6 +1,7 @@
 #include "sub_command.h"
 #include "game_context.h"
 #include "ss.h"
+#include "ss_orientation.h"
 
 #include <fstream>
 
@@ -18,8 +19,8 @@ struct complete : sub_command{
 
                 boost::optional<int> x;
                 boost::optional<int> y;
-                std::function<bool(std::vector<ss::word_placement> const&)> f{
-                        [](std::vector<ss::word_placement> const& _){ return true; }};
+                boost::optional<ss::array_orientation> orien;
+
 
                 auto printer = [](std::ostream& ostr, auto const& _){
                         ostr
@@ -52,6 +53,14 @@ struct complete : sub_command{
                                         i+=2;
                                         continue;
                                 }
+                                if( args[i] == "--orientation"){
+                                        if( args[i+1] == "vertical" )
+                                                orien = ss::array_orientation::vertical;
+                                        else 
+                                                orien = ss::array_orientation::horizontal;
+                                        i+=2;
+                                        continue;
+                                }
                                 // fall
                         case 1:
                                 if( args[i] == "--all" ){
@@ -69,13 +78,6 @@ struct complete : sub_command{
                                 BOOST_THROW_EXCEPTION(std::domain_error("expected --x <x> --y <y>"));
                         }
                 }
-                if( ( ! x ) != ( ! y ) ){
-                        BOOST_THROW_EXCEPTION(std::domain_error("need --x <x> --y <y>"));
-                } else if( x && y ){
-                        f = [&](std::vector<ss::word_placement> const& p){
-                                return ( p.front().get_x() == *x && p.front().get_y() == *y );
-                        };
-                }
 
 
 
@@ -85,9 +87,13 @@ struct complete : sub_command{
                 strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
                                [&](std::vector<ss::word_placement> const& placements)mutable
                                {
-                                        if( f(placements) ) {
-                                                consumer(placements);
-                                        }
+                                        if( x && *x != placements.front().get_x() )
+                                                return;
+                                        if( y && *y != placements.front().get_y() )
+                                                return;
+                                        if( orien && *orien != placements.front().get_orientation() )
+                                                return;
+                                        consumer(placements);
                                });
 
                 return EXIT_SUCCESS;

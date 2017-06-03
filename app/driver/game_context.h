@@ -15,6 +15,12 @@ struct player_t{
 
 };
 
+enum class game_state{
+        running,
+        less_than_7_tiles,
+        finish,
+};
+
 struct game_context{
         game_context()
                 : gen{rd()}
