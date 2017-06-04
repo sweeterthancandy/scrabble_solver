@@ -153,10 +153,12 @@ fu! Update()
         "silent! w!
         call system("./driver move")
         silent! e!
+        redraw
 endfu
 fu! Rotate()
         call system("./driver rotate")
         silent! e!
+        redraw
 endfu
 
 autocmd! VimEnter * call CreateGame()
