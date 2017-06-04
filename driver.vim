@@ -149,9 +149,12 @@ fu! Init()
 endfu
 
 fu! Update()
-        w
         call system("./driver move")
-        silent e!
+        silent! e!
+endfu
+fu! Rotate()
+        call system("./driver rotate")
+        silent! e!
 endfu
 
 autocmd! VimEnter * call CreateGame()
@@ -201,5 +204,11 @@ nnoremap p :echo VimToScrabble(col('.'), line('.'))
 nnoremap <C-n> i<C-x><C-o>
 nnoremap q :q!<CR>
 nnoremap <Space> :call Update()<CR>
+nnoremap r :call Rotate()<CR>
 
 set omnifunc=Complete
+
+augroup Reload 
+  au! 
+  au BufWritePost call Update()<CR>
+augroup END 
