@@ -99,6 +99,14 @@ namespace ss{
                                         break;
                                 }
                         }
+                        size_t count{0};
+                        for( char c : placements.front().get_mask() ){
+                                if( c != ' ' )
+                                        ++count;
+                        }
+                        if( count == 7 ){
+                                sigma += 50;
+                        }
                         return sigma;
                 }
         private:
