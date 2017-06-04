@@ -149,6 +149,8 @@ fu! Init()
 endfu
 
 fu! Update()
+        echom 'Update'
+        "silent! w!
         call system("./driver move")
         silent! e!
 endfu
@@ -170,6 +172,7 @@ set laststatus=2
 set undofile                " Save undo's after file closes
 set undolevels=100000000       " How many undos
 set nocompatible              " be iMproved, required
+set autoread
 
 let g:scrabble_xo = 6
 let g:scrabble_yo = 5
@@ -203,12 +206,12 @@ hi link hi___ green
 nnoremap p :echo VimToScrabble(col('.'), line('.'))
 nnoremap <C-n> i<C-x><C-o>
 nnoremap q :q!<CR>
-nnoremap <Space> :call Update()<CR>
+"nnoremap <Space> :call Update()<CR>
 nnoremap r :call Rotate()<CR>
 
 set omnifunc=Complete
 
 augroup Reload 
   au! 
-  au BufWritePost call Update()<CR>
+  au BufWritePost scrabble.scratch call Update()
 augroup END 

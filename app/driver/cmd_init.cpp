@@ -57,6 +57,10 @@ struct init : sub_command{
                 ctx.moves.push_back( "start");
 
 
+                std::ofstream of("scrabble.json");
+                ctx.write(of);
+                std::ofstream scof(ctx.scratch);
+                ctx.render(scof);
 
                 return EXIT_SUCCESS;
         }

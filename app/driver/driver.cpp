@@ -19,12 +19,6 @@ int driver_main(int argc, char** argv){
                 std::cerr << e.what() << "\n";
                 sub_command_factory::get()->print_help(argv[0]);
         }
-        #if 1
-        std::ofstream of("scrabble.json");
-        ctx.write(of);
-        std::ofstream scof(ctx.scratch);
-        ctx.render(scof);
-        #endif
         return EXIT_SUCCESS;
 }
 

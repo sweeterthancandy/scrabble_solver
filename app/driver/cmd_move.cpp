@@ -339,6 +339,10 @@ struct move : sub_command{
                 }
 
 
+                std::ofstream of("scrabble.json");
+                ctx.write(of);
+                std::ofstream scof(ctx.scratch);
+                ctx.render(scof);
 
                 return EXIT_SUCCESS;
         }

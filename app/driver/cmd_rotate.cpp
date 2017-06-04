@@ -13,6 +13,10 @@ struct rotate : sub_command{
                 ss::board tmp{ ctx.board, ss::array_orientation::vertical };
                 ctx.board = std::move(tmp);
 
+                std::ofstream of("scrabble.json");
+                ctx.write(of);
+                std::ofstream scof(ctx.scratch);
+                ctx.render(scof);
 
                 return EXIT_SUCCESS;
         }
