@@ -1,4 +1,5 @@
 #include "game_context.h" 
+#include "ss_print.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -25,6 +26,8 @@ void game_context::write(std::ostream& ostr)const{
                 bpt::ptree aux;
                 aux.put("backend", p.backend);
                 aux.put("rack", p.rack);
+                for( auto s : p.score )
+                        aux.add("scores.score", s);
                 root.add_child("players.player", aux);
         }
         for( auto const& l : board.to_string_vec()){
@@ -49,6 +52,11 @@ void game_context::read(std::istream& ostr){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");
                 players.back().rack    = p.second.get<std::string>("rack");
+                auto opt{ p.second.get_child_optional("scores") };
+                if( opt ){
+                        for( auto const& s : *opt)
+                             players.back().score.emplace_back( boost::lexical_cast<unsigned>(s.second.data()) );
+                }
         }
         for( auto const& p : root.get_child("moves")){
                 moves.push_back(p.second.data());
@@ -85,19 +93,48 @@ void game_context::render(std::ostream& ostr)const{
         }
         ostr << top << "\n";
         ostr << "\n";
+        /////////////////////////////////////////////////////////////////////////
+        // Scores
+        /////////////////////////////////////////////////////////////////////////
         ostr << "        |" << players[active_player].rack << "|\n";
+        ostr << "    Score\n"
+             << "\n";
+        for(auto const& p : players )
+                ostr << std::setw(11) << p.backend << "|";
+        ostr << "\n------------------------\n";
+        std::vector<unsigned> sigma( players.size(), 0 );
+        for( size_t i=0;;++i){
+                bool end{false};
+                for( size_t j=0;j!=players.size();++j){
+                        auto const& p{ players[j] };
+                        if( ! ( i < p.score.size() )) {
+                                end = true;
+                                ostr << std::setw(5) << "" << std::setw(0) << "|"
+                                     << std::setw(5) << "" << std::setw(0) << "|";
+                        } else {
+                                sigma[j] += p.score[i];
+                                ostr << std::setw(5) << p.score[i] << std::setw(0) << "|"
+                                     << std::setw(5) << sigma[j]   << std::setw(0) << "|";
+                        }
+                }
+                ostr << "\n";
+                if( end ) break;
+        }
 
-        ostr << "\nlogs:\n    ";
-        boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
+        /////////////////////////////////////////////////////////////////////////
+        // logs
+        /////////////////////////////////////////////////////////////////////////
+
         ostr << "\nmoves:\n    ";
         boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
+        ostr << "\nlogs:\n    ";
+        boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
 }
 // first placement is the real one, ie the one where the mask represents the tiles placed, the others are perps
 void game_context::apply_placements(std::vector<ss::word_placement> const& placements){
         auto score{ metric_ptr->calculate(placements) };
 
         auto& p{ players[active_player] };
-        
         for( auto const& p : placements ){
                 std::cout << p;
         }

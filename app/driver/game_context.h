@@ -12,13 +12,12 @@
 struct player_t{
         std::string backend;
         std::string rack;
-
+        std::vector<unsigned> score;
 };
 
 enum class game_state{
         running,
-        less_than_7_tiles,
-        finish,
+        finished,
 };
 
 struct game_context{
