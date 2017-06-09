@@ -21,17 +21,25 @@ endfu
 
 fu! AddHeat(x,y,percent)
         let l:hi = 'pct_' . str2nr(a:percent . '' )
-        call ScrabbleTileAdd(l:hi, a:x, a:y)
+        return ScrabbleTileAdd(l:hi, a:x, a:y)
 endfu
 fu! HeatMap()
-        let l:raw_input = system('./driver heat-map')
+        if exists('g:heat_map')
+                for c in g:heat_map
+                        call matchdelete(c)
+                endfor
+        endif
+        let l:raw_input = system('./driver heat-map --orientation horizontal')
         let l:input_lines = split(l:raw_input, "\n")
                 
+        let g:heat_map = []
         for l:input_line in l:input_lines
                 let l:item = json_decode(l:input_line)
-                call AddHeat(l:item.x, l:item.y, l:item.metric  * 100 / l:item.sigma )
+                let c = AddHeat(l:item.x, l:item.y, l:item.metric  * 100 / l:item.max )
+                let g:heat_map += [c]
         endfor
 endfu
+
 function! Complete(findstart, base)
 
         let l:sc = VimToScrabble(col('.'), line('.'))
@@ -162,11 +170,16 @@ fu! Init()
 
         call setpos('.', [0, g:scrabble_yo + 4, g:scrabble_xo + 5, 0])
 
-        for i in range(100)
-                let l:rr = printf('%02x',i * 255 / 100)
-                let l:rrggbb = l:rr . '0000'
-                let l:cmd = 'hi pct_' . l:i . ' guibg=#' . l:rrggbb 
+        for i in range(0,100)
+                let l:gg = printf('%02x',i * 255 / 100)
+                let l:rr = printf('%02x', 255 - i* 255 / 100)
+                let l:bb = printf('%02x',i * 255 / 100)
+                let l:rrggbb = l:rr . l:gg . l:bb
+                let l:hi = 'pct_' . l:i
+                let l:cmd = 'hi ' . l:hi .' guibg=#' . l:rrggbb  . ' guifg=#' . l:rrggbb
+                echom l:cmd
                 execute l:cmd
+                call TileAdd( l:hi, i+1, 1)
         endfor
 
 endfu
@@ -246,3 +259,7 @@ augroup END
 let &runtimepath.=',/home/dest/.vim/bundle/vim-colors-solarized/'
 set background=light
 colorscheme solarized
+
+set guioptions=
+
+set lines=100 columns=100

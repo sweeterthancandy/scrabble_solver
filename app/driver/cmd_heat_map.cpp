@@ -20,6 +20,7 @@ struct heat_map : sub_command{
                 enum Mode{
                         Mode_StartingPosition
                 };
+                boost::optional<ss::array_orientation> orien;
 
                 auto printer = [](std::ostream& ostr, auto const& _){
                         ostr
@@ -38,6 +39,14 @@ struct heat_map : sub_command{
                         default:
                                 // fall
                         case 1:
+                                if( args[i] == "--orientation"){
+                                        if( args[i+1] == "vertical" )
+                                                orien = ss::array_orientation::vertical;
+                                        else 
+                                                orien = ss::array_orientation::horizontal;
+                                        i+=2;
+                                        continue;
+                                }
                                 BOOST_THROW_EXCEPTION(std::domain_error("unknown argument"));
                         }
                 }
@@ -52,11 +61,19 @@ struct heat_map : sub_command{
                 strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
                                [&](std::vector<ss::word_placement> const& placements)mutable
                                {
+                                        if( orien && orien != placements.front().get_orientation() )
+                                                return;
                                         auto x{placements.front().get_x()};
                                         auto y{placements.front().get_y()};
                                         ++heat[x][y];
                                         ++sigma;
                                });
+                size_t m{0};
+                for(size_t x=0;x!=ctx.board.x_len(); ++x){
+                        for(size_t y=0;y!=ctx.board.y_len(); ++y){
+                                m = std::max(heat[x][y], m);
+                        }
+                }
                 for(size_t x=0;x!=ctx.board.x_len(); ++x){
                         for(size_t y=0;y!=ctx.board.y_len(); ++y){
                                 if( heat[x][y] == 0 )
@@ -65,6 +82,7 @@ struct heat_map : sub_command{
                                         << "{ "
                                         <<   "\"metric\":" << heat[x][y]
                                         << ", \"sigma\":\"" << sigma << "\""
+                                        << ", \"max\":\"" << m << "\""
                                         << ", \"x\":" << x
                                         << ", \"y\":" << y
                                         << " }\n";

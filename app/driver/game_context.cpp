@@ -76,7 +76,7 @@ void game_context::read(std::istream& ostr){
         }
 }
 void game_context::render(std::ostream& ostr)const{
-        ostr << "          SCRABBLE\n";
+        ostr << "          SCRABBLE                                                                                  \n";
         ostr << "\n";
         ostr << std::string(5, ' ');
         for(size_t i=0;i!=width;++i)
