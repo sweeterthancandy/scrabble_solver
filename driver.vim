@@ -19,6 +19,19 @@ fu! MarkStart(x, y)
         let g:start_mark = TileAdd('green', a:x, a:y)
 endfu
 
+fu! AddHeat(x,y,percent)
+        let l:hi = 'pct_' . str2nr(a:percent . '' )
+        call ScrabbleTileAdd(l:hi, a:x, a:y)
+endfu
+fu! HeatMap()
+        let l:raw_input = system('./driver heat-map')
+        let l:input_lines = split(l:raw_input, "\n")
+                
+        for l:input_line in l:input_lines
+                let l:item = json_decode(l:input_line)
+                call AddHeat(l:item.x, l:item.y, l:item.metric  * 100 / l:item.sigma )
+        endfor
+endfu
 function! Complete(findstart, base)
 
         let l:sc = VimToScrabble(col('.'), line('.'))
@@ -88,6 +101,9 @@ endfu
 fu! TileAdd(c,x,y)
         return matchadd(a:c, '\%' . a:x . 'c\%' . a:y . 'l' )
 endfu
+fu! ScrabbleTileAdd(c,x,y)
+        return TileAdd(a:c, a:x + g:scrabble_xo, a:y + g:scrabble_yo)
+endfu
 fu! Init()
 
         let l:world = []
@@ -145,6 +161,13 @@ fu! Init()
         "call TileAdd('hi_tl', g:scrabble_xo + 14, g:scrabble_yo + 14)
 
         call setpos('.', [0, g:scrabble_yo + 4, g:scrabble_xo + 5, 0])
+
+        for i in range(100)
+                let l:rr = printf('%02x',i * 255 / 100)
+                let l:rrggbb = l:rr . '0000'
+                let l:cmd = 'hi pct_' . l:i . ' guibg=#' . l:rrggbb 
+                execute l:cmd
+        endfor
 
 endfu
 
@@ -210,6 +233,7 @@ nnoremap <C-n> i<C-x><C-o>
 nnoremap q :q!<CR>
 "nnoremap <Space> :call Update()<CR>
 nnoremap r :call Rotate()<CR>
+nnoremap H :call HeatMap()<CR>
 
 set omnifunc=Complete
 
@@ -217,3 +241,8 @@ augroup Reload
   au! 
   au BufWritePost scrabble.scratch call Update()
 augroup END 
+
+
+let &runtimepath.=',/home/dest/.vim/bundle/vim-colors-solarized/'
+set background=light
+colorscheme solarized

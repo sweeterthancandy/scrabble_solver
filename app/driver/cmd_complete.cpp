@@ -91,7 +91,7 @@ struct complete : sub_command{
                                                 return;
                                         if( y && *y != placements.front().get_y() )
                                                 return;
-                                        if( orien && *orien != placements.front().get_orientation() )
+                                        if( orien && orien != placements.front().get_orientation() )
                                                 return;
                                         consumer(placements);
                                });
