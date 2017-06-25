@@ -183,17 +183,17 @@ fu! Init()
         
         "call setpos('.', [0, g:scrabble_yo + 4, g:scrabble_xo + 5, 0])
 
-        "for i in range(0,100)
-        "        let l:gg = printf('%02x',i * 255 / 100)
-        "        let l:rr = printf('%02x', 255 - i* 255 / 100)
-        "        let l:bb = printf('%02x',i * 255 / 100)
-        "        let l:rrggbb = l:rr . l:gg . l:bb
-        "        let l:hi = 'pct_' . l:i
-        "        let l:cmd = 'hi ' . l:hi .' guibg=#' . l:rrggbb  . ' guifg=#' . l:rrggbb
-        "        echom l:cmd
-        "        execute l:cmd
-        "        call TileAdd( l:hi, i+1, 1)
-        "endfor
+         for i in range(0,100)
+                 let l:gg = printf('%02x',i * 255 / 100)
+                 let l:rr = printf('%02x', 255 - i* 255 / 100)
+                 let l:bb = printf('%02x',i * 255 / 100)
+                 let l:rrggbb = l:rr . l:gg . l:bb
+                 let l:hi = 'pct_' . l:i
+                 let l:cmd = 'hi ' . l:hi .' guibg=#' . l:rrggbb  . ' guifg=#' . l:rrggbb
+                 echom l:cmd
+                 execute l:cmd
+                 "call TileAdd( l:hi, i+1, 1)
+         endfor
 
 endfu
 

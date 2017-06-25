@@ -7,45 +7,14 @@
 #include <memory>
 #include <random>
 
-#include <boost/variant.hpp>
 
 #include "ss_board.h"
 #include "ss_word_placement.h"
 #include "ss_dict.h"
 #include "ss_metric.h"
 
-struct skip_go_t{};
+#include "vplayer.h"
 
-struct meta_rewrite{};
-
-using player_move = boost::variant<
-        skip_go_t,
-        meta_rewrite,
-        std::vector<ss::word_placement> 
->;
-
-struct game_context;
-
-struct vplayer{
-        virtual ~vplayer()=default;
-        virtual player_move exec(game_context& ctx)=0;
-};
-
-using vplayer_factory = ss::generic_factory<vplayer>;
-
-struct player_t{
-        std::shared_ptr<vplayer> vp;
-        std::string backend;
-        std::string rack;
-        std::vector<std::tuple<size_t, std::string> > score;
-        size_t sigma()const{
-                size_t result{0};
-                for( auto const& s : score ){
-                        result += std::get<0>(s);
-                }
-                return result;
-        }
-};
 
 enum game_state{
         State_FirstPlacement,
@@ -58,12 +27,18 @@ struct game_context{
                 : gen{rd()}
         {}
 
-        void write(std::ostream& ostr)const;
-        void read(std::istream& ostr);
-        void render(std::ostream& ostr)const;
         void apply_placements(std::vector<ss::word_placement> const& placements);
         void skip_go();
+        void exchange(std::string const& s);
         void on_finish_();
+        void next_();
+
+        player_t* get_active(){
+                return &players[active_player];
+        }
+        player_t const* get_active()const{
+                return &players[active_player];
+        }
 
         std::random_device rd;
         std::mt19937 gen;
@@ -90,5 +65,8 @@ struct game_context{
         size_t skips;
         bool is_rotated;
 };
+
+#include "game_context_io.h"
+
 
 #endif // SS_GAME_CONTEXT_H

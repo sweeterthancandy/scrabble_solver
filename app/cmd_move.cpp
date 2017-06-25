@@ -2,6 +2,7 @@
 #include "game_context.h"
 #include "ss_algorithm.h"
 #include "ss_strategy.h"
+#include "ss_print.h"
 
 #include <fstream>
 
@@ -11,34 +12,34 @@ namespace{
 struct move : sub_command{
         virtual int run(game_context& ctx, std::vector<std::string> const& args){
                 std::ifstream ifs("scrabble.json");
-                ctx.read(ifs);
+                game_context_io{}.read(ctx, ifs);
                 ifs.close();
 
-                auto write = [&](){
-                        std::ofstream of("scrabble.json");
-                        ctx.write(of);
-                        std::ofstream scof(ctx.scratch);
-                        ctx.render(scof);
-                };
+
 
                 // we can't have everyone skip there go 3 times in a row
 
                 try{
                         for(; ctx.state != State_Finished;){
-                                auto m{ ctx.players[ctx.active_player].vp->exec( ctx ) };
+                                PRINT_SEQ((ctx.active_player));
+                                auto ap{ ctx.get_active() };
+                                auto m{ ap->vp->exec( ctx ) };
 
                                 if( boost::get<skip_go_t>(&m) ){
                                         ctx.skip_go();
-                                } else if ( boost::get<meta_rewrite>(&m)){
-                                        break;
+                                } else if ( auto ptr = boost::get<exchange_t>(&m) ){
+                                        ctx.exchange( ptr->get() );
                                 } else if ( auto ptr = boost::get<std::vector<ss::word_placement> >(&m) ){
                                         ctx.apply_placements( *ptr );
+                                } else if ( boost::get<meta_rewrite>(&m)){
+                                        game_context_io{}.write_all(ctx);
+                                        break;
                                 }
-                        }
 
-                        write();
+                                ap->vp->post_exec(ctx);
+                        }
                 } catch(...){
-                        write();
+                        game_context_io{}.write_all(ctx);
                         throw;
                 }
                 return EXIT_SUCCESS;

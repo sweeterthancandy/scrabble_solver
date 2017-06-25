@@ -59,10 +59,7 @@ struct init : sub_command{
                 ctx.moves.push_back( "start");
 
 
-                std::ofstream of("scrabble.json");
-                ctx.write(of);
-                std::ofstream scof(ctx.scratch);
-                ctx.render(scof);
+                game_context_io().write_all(ctx);
 
                 return EXIT_SUCCESS;
         }

@@ -5,10 +5,9 @@ namespace{
 
 struct rotate : sub_command{
         virtual int run(game_context& ctx, std::vector<std::string> const& args){
-                do{
-                        std::ifstream ifs("scrabble.json");
-                        ctx.read(ifs);
-                }while(0);
+                std::ifstream ifs("scrabble.json");
+                game_context_io{}.read(ctx, ifs);
+                ifs.close();
 
                 if( ctx.is_rotated ){
                         ctx.board.rotate_90();
@@ -19,10 +18,7 @@ struct rotate : sub_command{
                 }
                 ctx.is_rotated = ! ctx.is_rotated;
 
-                std::ofstream of("scrabble.json");
-                ctx.write(of);
-                std::ofstream scof(ctx.scratch);
-                ctx.render(scof);
+                game_context_io{}.write_all(ctx);
 
                 return EXIT_SUCCESS;
         }

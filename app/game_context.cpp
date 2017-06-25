@@ -11,158 +11,39 @@
 
 #include "ss.h"
 
-namespace bpt = boost::property_tree;
 
-void game_context::write(std::ostream& ostr)const{
-        bpt::ptree root;
-        root.put("bag", bag);
-        root.put("active_player", active_player);
-        root.put("width", width);
-        root.put("height", height);
-        root.put("scratch", scratch);
-        root.put("dict", dict);
-        root.put("metric", metric);
-        root.put("state", state);
-        root.put("skips", skips);
-        root.put("is_rotated", is_rotated);
-        for( auto const& item : log )
-                root.add("logs.log", item);
-        for( auto const& item : moves )
-                root.add("moves.move", item);
-        for( auto const& p : players){
-                bpt::ptree aux;
-                aux.put("backend", p.backend);
-                aux.put("rack", p.rack);
-                for( auto s : p.score ){
-                        using std::get;
-                        bpt::ptree p;
-                        p.put("value", std::get<0>(s));
-                        p.put("word" , std::get<1>(s));
-                        aux.add_child("scores.score", p);
-                }
-                root.add_child("players.player", aux);
-        }
-        for( auto const& l : board.to_string_vec()){
-                root.add("board.line", l);
-        }
-
-        bpt::write_json(ostr, root);
-}
-void game_context::read(std::istream& ostr){
-        bpt::ptree root;
-        bpt::read_json(ostr, root);
-        bag           = root.get<std::string>("bag");
-        scratch       = root.get<std::string>("scratch");
-        dict          = root.get<std::string>("dict");
-        dict_ptr      = ss::dictionary_factory::get_inst()->make(dict);
-        metric        = root.get<std::string>("metric");
-        metric_ptr    = ss::metric_factory::get_inst()->make(metric);
-        active_player = root.get<size_t>("active_player");
-        width         = root.get<size_t>("width");
-        height        = root.get<size_t>("height");
-        state         = static_cast<game_state>(root.get<int>("state"));
-        skips         = root.get<size_t>("skips");
-        is_rotated    = root.get<bool>("is_rotated");
-        
-        board         = ss::board(width, height);
-
-        size_t y=0;
-        for( auto const& c : root.get_child("board") ){
-                //std::string l{ c.second.get<std::string>("line") };
-                std::string l{ c.second.data() };
-                for( size_t x=0;x!=l.size();++x){
-                        board(x,y) = l[x];
-                }
-                ++y;
-        }
-
-        for( auto const& p : root.get_child("players")){
-                players.emplace_back();
-                players.back().backend = p.second.get<std::string>("backend");
-                players.back().rack    = p.second.get<std::string>("rack");
-                players.back().vp      = vplayer_factory::get_inst()->make( players.back().backend );
-                auto opt{ p.second.get_child_optional("scores") };
-                if( opt ){
-                        for( auto const& s : *opt){
-                             players.back().score.emplace_back(
-                                     s.second.get<size_t>("value"),
-                                     s.second.get<std::string>("word"));
-                        }
-                }
-        }
-        for( auto const& p : root.get_child("moves")){
-                moves.push_back(p.second.data());
-        }
-        for( auto const& p : root.get_child("logs")){
-                log.push_back(p.second.data());
-        }
-
-}
-void game_context::render(std::ostream& ostr)const{
-        using std::get;
-        ostr << "          SCRABBLE                                                                                  \n";
-        ostr << "\n";
-        ostr << std::string(5, ' ');
-        for(size_t i=0;i!=width;++i)
-                ostr << boost::lexical_cast<std::string>(i%10);
-        ostr << "\n";
-        auto sv{ board.to_string_vec() };
-        int i{0};
-        std::string top{ std::string(4,' ') + "+" + std::string(width,'-') + "+"};
-
-        ostr << top << "\n";
-        for( auto const& line : sv ){
-                ostr << "   " << (i%10) << "|" << line << "|\n";
-                ++i;
-        }
-        ostr << top << "\n";
-        ostr << "\n";
-        /////////////////////////////////////////////////////////////////////////
-        // Scores
-        /////////////////////////////////////////////////////////////////////////
-        ostr << "        |" << players[active_player].rack << "|\n";
-        ostr << "    Score\n"
-             << "\n";
-        for(auto const& p : players )
-                ostr << std::setw(22) << std::internal << p.backend << "|";
-        ostr << "\n";
-        ostr << std::string(22 * players.size(),'-') << "\n";
-        std::vector<unsigned> sigma( players.size(), 0 );
-        for( size_t i=0;;++i){
-                bool end{false};
-                for( size_t j=0;j!=players.size();++j){
-                        auto const& p{ players[j] };
-                        if( ! ( i < p.score.size() )) {
-                                end = true;
-                                ostr << std::setw(10) << "" << std::setw(0) << "|"
-                                     << std::setw(5)  << "" << std::setw(0) << "|"
-                                     << std::setw(5)  << "" << std::setw(0) << "|";
-                        } else {
-                                sigma[j] += get<0>(p.score[i]);
-                                ostr << std::setw(10) << std::left << get<1>(p.score[i]) << std::setw(0) << "|"
-                                     << std::setw(5)  << get<0>(p.score[i]) << std::setw(0) << "|"
-                                     << std::setw(5)  << sigma[j]   << std::setw(0) << "|";
-                        }
-                }
-                ostr << "\n";
-                if( end ) break;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        // logs
-        /////////////////////////////////////////////////////////////////////////
-
-        #if 0
-        ostr << "\nmoves:\n    ";
-        boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
-        #endif
-        ostr << "\nlogs:\n    ";
-        boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
-}
 void game_context::skip_go(){
         if( ++skips == players.size() * 3 ){
                 on_finish_();
         }
+        next_();
+}
+void game_context::exchange(std::string const& s){
+        // can't exchange when less than 7 tiles
+        if( bag.size() < 7 )
+                BOOST_THROW_EXCEPTION((std::domain_error("not enough tiles for exchange")));
+
+        std::string to_remove(s);
+        // want to preservce order of get_active()->rack
+
+        for(char& c : get_active()->rack ){
+                auto iter = boost::find(to_remove, c );
+                if( iter == to_remove.end() )
+                        continue;
+                c = bag.back();
+                bag.pop_back();
+                *iter = ' '; // zero it out
+        }
+        std::stringstream sstr;
+        sstr << "Ex ";
+        boost::copy( s, std::ostream_iterator<char>(sstr,","));
+        get_active()->score.emplace_back(0, sstr.str());
+
+        bag += s;
+        std::shuffle( bag.begin(), bag.end(), gen);
+
+        next_();
+
 }
 // first placement is the real one, ie the one where the mask represents the tiles placed, the others are perps
 void game_context::apply_placements(std::vector<ss::word_placement> const& placements){
@@ -219,10 +100,14 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         } else{
                 state = State_Running; // bacause this could of been first move
 
-                ++active_player;
-                active_player = active_player % players.size();
+                next_();
+
         }
 
+}
+void game_context::next_(){
+        ++active_player;
+        active_player = active_player % players.size();
 }
 void game_context::on_finish_(){
         state = State_Finished;

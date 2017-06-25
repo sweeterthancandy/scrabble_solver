@@ -24,7 +24,12 @@ namespace ss{
                 rack()=default;
                 explicit rack(std::vector<tile_t>& tiles);
                 explicit rack(std::string const& s);
+                std::string to_string()const;
                 rack clone_remove_tile(tile_t t)const;
+                rack & remove(tile_t t){
+                        *this = this->clone_remove_tile(t);
+                        return *this;
+                }
                 std::set<tile_t> make_tile_set()const;
                 size_t size()const;
 		decltype(auto) begin()const{return tiles_.begin(); }

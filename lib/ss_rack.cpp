@@ -49,4 +49,10 @@ namespace ss{
                 boost::copy( self.tiles_, std::ostream_iterator<tile_t>(ostr << "{", ","));
                 return ostr << "}";
         }
+
+        std::string rack::to_string()const{
+                std::stringstream sstr;
+                boost::copy( tiles_, std::ostream_iterator<tile_t>(sstr,""));
+                return sstr.str();
+        }
 }

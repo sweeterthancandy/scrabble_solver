@@ -12,10 +12,9 @@ namespace{
 
 struct heat_map : sub_command{
         virtual int run(game_context& ctx, std::vector<std::string> const& args){
-                do{
-                        std::ifstream ifs("scrabble.json");
-                        ctx.read(ifs);
-                }while(0);
+                std::ifstream ifs("scrabble.json");
+                game_context_io{}.read(ctx, ifs);
+                ifs.close();
 
                 enum Mode{
                         Mode_StartingPosition
