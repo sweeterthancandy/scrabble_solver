@@ -35,14 +35,14 @@ std::map<char, size_t> tile_dist ={
 struct init : sub_command{
         virtual int run(game_context& ctx, std::vector<std::string> const& args){
                 for(auto const& p : tile_dist )
-                        ctx.bag  += std::string(p.second, p.first);
+                        ctx.bag  += std::string(p.second/4, p.first);
                 std::shuffle( ctx.bag.begin(), ctx.bag.end(), ctx.gen);
 
                 ctx.width = 15;
                 ctx.height = 15;
                 ctx.board = ss::board(ctx.width, ctx.height);
                 ctx.players.emplace_back();
-                ctx.players.back().backend = "player";
+                ctx.players.back().backend = "text";
                 ctx.players.back().rack = ctx.bag.substr(ctx.bag.size()-7);
                 ctx.bag.resize( ctx.bag.size() - 7 );
                 ctx.players.emplace_back();
@@ -52,6 +52,7 @@ struct init : sub_command{
                 ctx.active_player = 0;
                 ctx.dict = "regular";
                 ctx.metric = "scrabble_metric";
+                ctx.state = State_FirstPlacement;
                 
                 ctx.log.push_back( "create new game");
                 ctx.moves.push_back( "start");

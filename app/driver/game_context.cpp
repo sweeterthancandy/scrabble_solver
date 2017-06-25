@@ -18,6 +18,7 @@ void game_context::write(std::ostream& ostr)const{
         root.put("scratch", scratch);
         root.put("dict", dict);
         root.put("metric", metric);
+        root.put("state", state);
         for( auto const& item : log )
                 root.add("logs.log", item);
         for( auto const& item : moves )
@@ -48,10 +49,12 @@ void game_context::read(std::istream& ostr){
         active_player = root.get<size_t>("active_player");
         width = root.get<size_t>("width");
         height = root.get<size_t>("height");
+        state = static_cast<game_state>(root.get<int>("state"));
         for( auto const& p : root.get_child("players")){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");
                 players.back().rack    = p.second.get<std::string>("rack");
+                players.back().vp      = vplayer_factory::get_inst()->make( players.back().backend );
                 auto opt{ p.second.get_child_optional("scores") };
                 if( opt ){
                         for( auto const& s : *opt)
