@@ -32,8 +32,13 @@ void game_context::write(std::ostream& ostr)const{
                 bpt::ptree aux;
                 aux.put("backend", p.backend);
                 aux.put("rack", p.rack);
-                for( auto s : p.score )
-                        aux.add("scores.score", s);
+                for( auto s : p.score ){
+                        using std::get;
+                        bpt::ptree p;
+                        p.put("value", std::get<0>(s));
+                        p.put("word" , std::get<1>(s));
+                        aux.add_child("scores.score", p);
+                }
                 root.add_child("players.player", aux);
         }
         for( auto const& l : board.to_string_vec()){
@@ -45,17 +50,17 @@ void game_context::write(std::ostream& ostr)const{
 void game_context::read(std::istream& ostr){
         bpt::ptree root;
         bpt::read_json(ostr, root);
-        bag = root.get<std::string>("bag");
-        scratch = root.get<std::string>("scratch");
-        dict = root.get<std::string>("dict");
-        dict_ptr =  ss::dictionary_factory::get_inst()->make(dict);
-        metric = root.get<std::string>("metric");
-        metric_ptr =  ss::metric_factory::get_inst()->make(metric);
+        bag           = root.get<std::string>("bag");
+        scratch       = root.get<std::string>("scratch");
+        dict          = root.get<std::string>("dict");
+        dict_ptr      =  ss::dictionary_factory::get_inst()->make(dict);
+        metric        = root.get<std::string>("metric");
+        metric_ptr    =  ss::metric_factory::get_inst()->make(metric);
         active_player = root.get<size_t>("active_player");
-        width = root.get<size_t>("width");
-        height = root.get<size_t>("height");
-        state = static_cast<game_state>(root.get<int>("state"));
-        skips = root.get<size_t>("skips");
+        width         = root.get<size_t>("width");
+        height        = root.get<size_t>("height");
+        state         = static_cast<game_state>(root.get<int>("state"));
+        skips         = root.get<size_t>("skips");
         for( auto const& p : root.get_child("players")){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");
@@ -63,8 +68,11 @@ void game_context::read(std::istream& ostr){
                 players.back().vp      = vplayer_factory::get_inst()->make( players.back().backend );
                 auto opt{ p.second.get_child_optional("scores") };
                 if( opt ){
-                        for( auto const& s : *opt)
-                             players.back().score.emplace_back( boost::lexical_cast<unsigned>(s.second.data()) );
+                        for( auto const& s : *opt){
+                             players.back().score.emplace_back(
+                                     s.second.get<size_t>("value"),
+                                     s.second.get<std::string>("word"));
+                        }
                 }
         }
         for( auto const& p : root.get_child("moves")){
@@ -85,6 +93,7 @@ void game_context::read(std::istream& ostr){
         }
 }
 void game_context::render(std::ostream& ostr)const{
+        using std::get;
         ostr << "          SCRABBLE                                                                                  \n";
         ostr << "\n";
         ostr << std::string(5, ' ');
@@ -109,7 +118,7 @@ void game_context::render(std::ostream& ostr)const{
         ostr << "    Score\n"
              << "\n";
         for(auto const& p : players )
-                ostr << std::setw(11) << p.backend << "|";
+                ostr << std::setw(22) << std::internal << p.backend << "|";
         ostr << "\n------------------------\n";
         std::vector<unsigned> sigma( players.size(), 0 );
         for( size_t i=0;;++i){
@@ -118,12 +127,14 @@ void game_context::render(std::ostream& ostr)const{
                         auto const& p{ players[j] };
                         if( ! ( i < p.score.size() )) {
                                 end = true;
-                                ostr << std::setw(5) << "" << std::setw(0) << "|"
-                                     << std::setw(5) << "" << std::setw(0) << "|";
+                                ostr << std::setw(10) << "" << std::setw(0) << "|"
+                                     << std::setw(5)  << "" << std::setw(0) << "|"
+                                     << std::setw(5)  << "" << std::setw(0) << "|";
                         } else {
-                                sigma[j] += p.score[i];
-                                ostr << std::setw(5) << p.score[i] << std::setw(0) << "|"
-                                     << std::setw(5) << sigma[j]   << std::setw(0) << "|";
+                                sigma[j] += get<0>(p.score[i]);
+                                ostr << std::setw(10) << std::left << get<1>(p.score[i]) << std::setw(0) << "|"
+                                     << std::setw(5)  << get<0>(p.score[i]) << std::setw(0) << "|"
+                                     << std::setw(5)  << sigma[j]   << std::setw(0) << "|";
                         }
                 }
                 ostr << "\n";
@@ -190,7 +201,7 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         std::stringstream sstr;
         sstr << "player " << active_player << " placed " << placements.front().get_word() << " at <" << placements.front().get_x() << "," << placements.front().get_y() << "> for " << score << " points";
         moves.emplace_back(sstr.str());
-        p.score.push_back(score);
+        p.score.emplace_back(score, placements.front().get_word());
 
         if( p.rack.size() == 0 ){
                 on_finish_();
@@ -210,7 +221,7 @@ void game_context::on_finish_(){
         unsigned max_score{0};
         size_t   max_idx{0};
         for(size_t idx{0};idx!=players.size();++idx){
-                auto s{std::accumulate( players[idx].score.begin(), players[idx].score.end(), 0 ) };
+                auto s{ players[idx].sigma() };
                 if( s > max_score ){
                         max_score = s;
                         max_idx   = idx;

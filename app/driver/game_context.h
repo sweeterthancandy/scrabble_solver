@@ -37,7 +37,14 @@ struct player_t{
         std::shared_ptr<vplayer> vp;
         std::string backend;
         std::string rack;
-        std::vector<unsigned> score;
+        std::vector<std::tuple<size_t, std::string> > score;
+        size_t sigma()const{
+                size_t result{0};
+                for( auto const& s : score ){
+                        result += std::get<0>(s);
+                }
+                return result;
+        }
 };
 
 enum game_state{

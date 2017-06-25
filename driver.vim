@@ -1,7 +1,11 @@
 
-
-
-
+fu! Log(msg)
+        call system("echo ". a:msg . " >> driver.log")
+endfu
+fu! LoggedSystem(cmd)
+        call Log(a:cmd)
+        return system(a:cmd)
+endfu
 
 
 
@@ -29,7 +33,7 @@ fu! HeatMap()
                         call matchdelete(c)
                 endfor
         endif
-        let l:raw_input = system('./driver heat-map --orientation horizontal')
+        let l:raw_input = LoggedSystem('./driver heat-map --orientation horizontal')
         let l:input_lines = split(l:raw_input, "\n")
                 
         let g:heat_map = []
@@ -47,7 +51,7 @@ function! Complete(findstart, base)
         let l:the_command = 'complete --y ' . l:sc[1] . ' --orientation horizontal'
 
         if a:findstart == 1
-                let l:raw_input = system('./driver '. l:the_command)
+                let l:raw_input = LoggedSystem('./driver '. l:the_command)
                 let l:input_lines = split(l:raw_input, "\n")
 
                 echom l:raw_input
@@ -64,7 +68,7 @@ function! Complete(findstart, base)
         endif
 
 
-        let l:raw_input = system('./driver '. l:the_command)
+        let l:raw_input = LoggedSystem('./driver '. l:the_command)
         let l:input_lines = split(l:raw_input, "\n")
                 
         if len(l:raw_input) == 0 
@@ -76,9 +80,12 @@ function! Complete(findstart, base)
         for l:input_line in l:input_lines
                 let l:item = json_decode(l:input_line)
 
+                call Log(string(l:item))
+
                 if l:item.orientation ==# "horizontal"
                         let l:cand = ''
                         echom g:current_line
+                        call Log(string(l:item))
                         for l:i in range(g:scrabble_xlen)
                                 if l:item.x <= l:i && l:i < l:item.x + len(l:item.word)
                                         let l:cand .= l:item.word[ l:i - l:item.x]
@@ -86,8 +93,10 @@ function! Complete(findstart, base)
                                         let l:cand .= g:current_line[g:scrabble_xo-1 + l:i]
                                 endif
                         endfor
+                        call Log(string(l:item))
                         let l:cand .= '|'
                         call add(l:ret, l:cand)
+                        call Log(string(l:item))
                 endif
         endfor
 
@@ -95,12 +104,14 @@ function! Complete(findstart, base)
                 call setline('.', g:current_line)
         endif
 
+        call Log(string(l:ret))
+
         return l:ret
 
 endfu
 
 fu! CreateGame()
-        "call system("./driver init")
+        "call LoggedSystem("./driver init")
         :e scrabble.scratch
 
         call Init()
@@ -187,12 +198,12 @@ endfu
 fu! Update()
         echom 'Update'
         "silent! w!
-        call system("./driver move")
+        call LoggedSystem("./driver move")
         silent! e!
         redraw
 endfu
 fu! Rotate()
-        call system("./driver rotate")
+        call LoggedSystem("./driver rotate")
         silent! e!
         redraw
 endfu
@@ -245,7 +256,7 @@ nnoremap p :echo VimToScrabble(col('.'), line('.'))
 nnoremap <C-n> i<C-x><C-o>
 nnoremap q :q!<CR>
 "nnoremap <Space> :call Update()<CR>
-nnoremap r :call Rotate()<CR>
+nnoremap G :call Rotate()<CR>
 nnoremap H :call HeatMap()<CR>
 
 set omnifunc=Complete
