@@ -145,8 +145,10 @@ void game_context::render(std::ostream& ostr)const{
         // logs
         /////////////////////////////////////////////////////////////////////////
 
+        #if 0
         ostr << "\nmoves:\n    ";
         boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
+        #endif
         ostr << "\nlogs:\n    ";
         boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
 }
