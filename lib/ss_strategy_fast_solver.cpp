@@ -1,4 +1,5 @@
 #include "ss.h"
+#include "ss_print.h"
 #include "ss_board.h"
 #include "ss_driver.h"
 #include "ss_dict.h"
@@ -22,11 +23,13 @@
 
 //#define ALGORITHM_DEBUG
 
+#if 1
 #ifdef  PRINT_SEQ
 #undef  PRINT_SEQ
 #endif /* PRINT_SEQ */
 
 #define PRINT_SEQ(SEQ) 
+#endif
 
 // this represents the possible
         using std::get;
@@ -181,6 +184,8 @@
                                 };
                                 std::vector<int> sum{0};
 
+
+                                PRINT_SEQ((i)(board_lines[i]));
                                 for(size_t j=0;j!=width;++j){
                                         if( tile_traits::not_empty(board_lines[i][j]) )
                                                 continue;
@@ -213,7 +218,7 @@
                                                         break;
                                                 prefix += board_lines[i][k];
                                         }
-                                        for(size_t k=j+1;k +1 <width;++k){
+                                        for(size_t k=j+1;k  <width;++k){
                                                 if( tile_traits::empty(board_lines[i][k]))
                                                         break;
                                                 suffix += board_lines[i][k];
@@ -225,7 +230,7 @@
                                                        left.size() || 
                                                        right.size();
 
-                                        PRINT_SEQ((j)(left)(left)(is_start));
+                                        PRINT_SEQ((j)(left)(left)(suffix)(prefix)(is_start));
 
                                         left = std::string(left.rbegin(),left.rend());
                                         prefix = std::string(prefix.rbegin(),prefix.rend());
@@ -357,6 +362,7 @@
                                                 if( delta >= min_n ){
                                                         // terminal
                                                         auto word = get<Item_Word>(item);
+                                                        PRINT_SEQ((word));
 
                                                         bool ret = dict.contains(word);
 
