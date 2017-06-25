@@ -1,4 +1,4 @@
-#include "sub_command.h"
+#include "driver_sub_command.h"
 #include "game_context.h"
 #include "ss_algorithm.h"
 #include "ss_strategy.h"
@@ -38,6 +38,7 @@ struct move : sub_command{
 
                                 ap->vp->post_exec(ctx);
                         }
+                        game_context_io{}.write_all(ctx);
                 } catch(...){
                         game_context_io{}.write_all(ctx);
                         throw;

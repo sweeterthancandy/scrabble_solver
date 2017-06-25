@@ -1,4 +1,4 @@
-#include "sub_command.h"
+#include "driver_sub_command.h"
 #include "game_context.h"
 
 namespace{
@@ -57,6 +57,7 @@ struct init : sub_command{
                 
                 ctx.log.push_back( "create new game");
                 ctx.moves.push_back( "start");
+                ctx.debug.push_back( "start");
 
 
                 game_context_io().write_all(ctx);

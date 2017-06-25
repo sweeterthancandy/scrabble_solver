@@ -13,12 +13,21 @@
 
 
 void game_context::skip_go(){
+        std::stringstream debugsstr;
+        debugsstr << "skip go for " << active_player;
+        debug.emplace_back( debugsstr.str());
+
         if( ++skips == players.size() * 3 ){
                 on_finish_();
         }
+        get_active()->score.emplace_back(0, "<SKIP>");
         next_();
 }
 void game_context::exchange(std::string const& s){
+        std::stringstream debugsstr;
+        debugsstr << "exchange " << s << " for " << active_player;
+        debug.emplace_back( debugsstr.str());
+
         // can't exchange when less than 7 tiles
         if( bag.size() < 7 )
                 BOOST_THROW_EXCEPTION((std::domain_error("not enough tiles for exchange")));
@@ -35,18 +44,24 @@ void game_context::exchange(std::string const& s){
                 *iter = ' '; // zero it out
         }
         std::stringstream sstr;
-        sstr << "Ex ";
+        sstr << "<Ex ";
         boost::copy( s, std::ostream_iterator<char>(sstr,","));
+        sstr << ">";
         get_active()->score.emplace_back(0, sstr.str());
 
         bag += s;
         std::shuffle( bag.begin(), bag.end(), gen);
 
         next_();
-
 }
 // first placement is the real one, ie the one where the mask represents the tiles placed, the others are perps
 void game_context::apply_placements(std::vector<ss::word_placement> const& placements){
+        std::stringstream debugsstr;
+        debugsstr << "placement " << placements.front().get_word() << " for " << active_player;
+        debug.emplace_back( debugsstr.str());
+
+        skips = 0;
+
         auto score{ metric_ptr->calculate(placements) };
 
         auto& p{ players[active_player] };

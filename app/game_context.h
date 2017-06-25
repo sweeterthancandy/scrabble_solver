@@ -30,15 +30,16 @@ struct game_context{
         void apply_placements(std::vector<ss::word_placement> const& placements);
         void skip_go();
         void exchange(std::string const& s);
-        void on_finish_();
-        void next_();
-
         player_t* get_active(){
                 return &players[active_player];
         }
         player_t const* get_active()const{
                 return &players[active_player];
         }
+private:
+        void on_finish_();
+        void next_();
+public:
 
         std::random_device rd;
         std::mt19937 gen;
@@ -54,6 +55,7 @@ struct game_context{
 
         std::vector<std::string> log;
         std::vector<std::string> moves;
+        std::vector<std::string> debug;
 
         std::string dict;
         std::shared_ptr<ss::dictionary_t> dict_ptr;

@@ -25,6 +25,8 @@ void game_context_io::write(game_context const& ctx, std::ostream& ostr)const{
                 root.add("logs.log", item);
         for( auto const& item : ctx.moves )
                 root.add("moves.move", item);
+        for( auto const& item : ctx.debug )
+                root.add("debug.log", item);
         for( auto const& p : ctx.players){
                 bpt::ptree aux;
                 aux.put("backend", p.backend);
@@ -92,6 +94,9 @@ void game_context_io::read(game_context& ctx, std::istream& ostr)const{
         for( auto const& p : root.get_child("logs")){
                 ctx.log.push_back(p.second.data());
         }
+        for( auto const& p : root.get_child("debug")){
+                ctx.debug.push_back(p.second.data());
+        }
 
 }
 void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
@@ -148,12 +153,12 @@ void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
         // logs
         /////////////////////////////////////////////////////////////////////////
 
-        #if 0
         ostr << "\nmoves:\n    ";
-        boost::copy( moves, std::ostream_iterator<std::string>(ostr, "\n    "));
-        #endif
+        boost::copy( ctx.moves, std::ostream_iterator<std::string>(ostr, "\n    "));
         ostr << "\nlogs:\n    ";
         boost::copy( ctx.log, std::ostream_iterator<std::string>(ostr, "\n    "));
+        ostr << "\ndebug:\n    ";
+        boost::copy( ctx.debug, std::ostream_iterator<std::string>(ostr, "\n    "));
 }
 
 void game_context_io::write_all(game_context const& ctx)const{

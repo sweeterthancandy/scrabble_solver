@@ -1,9 +1,8 @@
-#include <cstring>
-#include <fstream>
-
-#include "sub_command.h"
+#include "driver_sub_command.h"
 #include "game_context.h"
 
+#include <cstring>
+#include <fstream>
 
 int driver_main(int argc, char** argv){
         if( argc < 2 || std::strcmp(argv[1], "--help") == 0 ){

@@ -36,7 +36,7 @@ std::vector<ss::word_placement> compile_move(ss::board const& original, ss::boar
         // now validate move
 
         if( diff.empty() ){
-                BOOST_THROW_EXCEPTION(std::domain_error("nothing to do"));
+                return std::vector<ss::word_placement>{};
         }
 
         ss::array_orientation orientation{ ss::array_orientation::horizontal };
