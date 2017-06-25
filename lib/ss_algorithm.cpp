@@ -218,7 +218,7 @@ std::vector<ss::word_placement> compile_move(ss::board const& original, ss::boar
                                                 original,
                                                 x,
                                                 d.second - left.size(),
-                                                ss::array_orientation::horizontal,
+                                                ss::array_orientation::vertical,
                                                 word));
                         }
                 }
