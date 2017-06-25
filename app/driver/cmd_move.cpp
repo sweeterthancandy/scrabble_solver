@@ -39,10 +39,6 @@ struct move : sub_command{
                                 }
                         }
 
-                        if( ctx.state = State_Finished ){
-                                ctx.finish_game();
-                        }
-
 
                         write();
                 } catch(...){

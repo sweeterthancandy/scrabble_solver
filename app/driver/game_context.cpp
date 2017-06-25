@@ -1,9 +1,13 @@
 #include "game_context.h" 
 #include "ss_print.h"
 
+#include <algorithm>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range/algorithm.hpp>
+
 
 #include "ss.h"
 
@@ -183,6 +187,22 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
 
         if( p.rack.size() == 0 ){
                 state = State_Finished;
+
+                unsigned max_score{0};
+                size_t   max_idx{0};
+                for(size_t idx{0};idx!=players.size();++idx){
+                        auto s{std::accumulate( players[idx].score.begin(), players[idx].score.end(), 0 ) };
+                        if( s > max_score ){
+                                max_score = s;
+                                max_idx   = idx;
+                        }
+                }
+                std::stringstream sstr;
+                sstr << "player " << max_idx << " wins with " << max_score;
+                log.push_back(sstr.str());
+
+
+
         } else{
                 state = State_Running; // bacause this could of been first move
 
