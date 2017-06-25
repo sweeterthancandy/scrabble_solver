@@ -21,24 +21,20 @@ struct move : sub_command{
                         ctx.render(scof);
                 };
 
+                // we can't have everyone skip there go 3 times in a row
 
                 try{
                         for(; ctx.state != State_Finished;){
                                 auto m{ ctx.players[ctx.active_player].vp->exec( ctx ) };
 
                                 if( boost::get<skip_go_t>(&m) ){
-                                        std::cout << "skipping\n";
-                                        continue;
+                                        ctx.skip_go();
                                 } else if ( boost::get<meta_rewrite>(&m)){
-                                        std::cout << "rewriting\n";
                                         break;
                                 } else if ( auto ptr = boost::get<std::vector<ss::word_placement> >(&m) ){
-                                        std::cout << "moving\n";
                                         ctx.apply_placements( *ptr );
-                                        write();
                                 }
                         }
-
 
                         write();
                 } catch(...){

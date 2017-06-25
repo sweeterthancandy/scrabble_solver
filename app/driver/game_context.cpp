@@ -23,6 +23,7 @@ void game_context::write(std::ostream& ostr)const{
         root.put("dict", dict);
         root.put("metric", metric);
         root.put("state", state);
+        root.put("skips", skips);
         for( auto const& item : log )
                 root.add("logs.log", item);
         for( auto const& item : moves )
@@ -54,6 +55,7 @@ void game_context::read(std::istream& ostr){
         width = root.get<size_t>("width");
         height = root.get<size_t>("height");
         state = static_cast<game_state>(root.get<int>("state"));
+        skips = root.get<size_t>("skips");
         for( auto const& p : root.get_child("players")){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");
@@ -137,6 +139,11 @@ void game_context::render(std::ostream& ostr)const{
         ostr << "\nlogs:\n    ";
         boost::copy( log, std::ostream_iterator<std::string>(ostr, "\n    "));
 }
+void game_context::skip_go(){
+        if( ++skips == players.size() * 3 ){
+                on_finish_();
+        }
+}
 // first placement is the real one, ie the one where the mask represents the tiles placed, the others are perps
 void game_context::apply_placements(std::vector<ss::word_placement> const& placements){
         auto score{ metric_ptr->calculate(placements) };
@@ -186,21 +193,7 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         p.score.push_back(score);
 
         if( p.rack.size() == 0 ){
-                state = State_Finished;
-
-                unsigned max_score{0};
-                size_t   max_idx{0};
-                for(size_t idx{0};idx!=players.size();++idx){
-                        auto s{std::accumulate( players[idx].score.begin(), players[idx].score.end(), 0 ) };
-                        if( s > max_score ){
-                                max_score = s;
-                                max_idx   = idx;
-                        }
-                }
-                std::stringstream sstr;
-                sstr << "player " << max_idx << " wins with " << max_score;
-                log.push_back(sstr.str());
-
+                on_finish_();
 
 
         } else{
@@ -210,4 +203,20 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
                 active_player = active_player % players.size();
         }
 
+}
+void game_context::on_finish_(){
+        state = State_Finished;
+
+        unsigned max_score{0};
+        size_t   max_idx{0};
+        for(size_t idx{0};idx!=players.size();++idx){
+                auto s{std::accumulate( players[idx].score.begin(), players[idx].score.end(), 0 ) };
+                if( s > max_score ){
+                        max_score = s;
+                        max_idx   = idx;
+                }
+        }
+        std::stringstream sstr;
+        sstr << "player " << max_idx << " wins with " << max_score;
+        log.push_back(sstr.str());
 }

@@ -53,6 +53,7 @@ struct init : sub_command{
                 ctx.dict = "regular";
                 ctx.metric = "scrabble_metric";
                 ctx.state = State_FirstPlacement;
+                ctx.skips = 0;
                 
                 ctx.log.push_back( "create new game");
                 ctx.moves.push_back( "start");

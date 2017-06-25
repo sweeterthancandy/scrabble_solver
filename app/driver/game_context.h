@@ -55,6 +55,8 @@ struct game_context{
         void read(std::istream& ostr);
         void render(std::ostream& ostr)const;
         void apply_placements(std::vector<ss::word_placement> const& placements);
+        void skip_go();
+        void on_finish_();
 
         std::random_device rd;
         std::mt19937 gen;
@@ -78,6 +80,7 @@ struct game_context{
         std::shared_ptr<ss::metric> metric_ptr;
         
         game_state state;
+        size_t skips;
 
 };
 
