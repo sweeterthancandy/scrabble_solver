@@ -17,8 +17,24 @@ namespace tc{
                 auto end()       { return vec_.end(); }
                 auto end()const  { return vec_.end(); }
 
+                auto size()const { return vec_.size(); }
+
                 void push_back(std::string line){ vec_.push_back(line); }
                 void emplace_back(){ vec_.emplace_back(); }
+
+                void pad_square(){
+                        size_t width{0};
+                        for(auto const& l : vec_ ){
+                                width = std::max(l.size(), width);
+                        }
+                        for(auto& l : vec_ ){
+                                if( l.size() < width ){
+                                        size_t padding{ width - l.size()};
+                                        l += std::string(padding, ' ');
+                                }
+                        }
+
+                }
 
                 text_object make_static_view(size_t x_offset,
                                              size_t y_offset,
@@ -166,6 +182,45 @@ namespace tc{
                 }
                 void push(text_handle handle){
                         vec_.push_back(std::move(handle));
+                }
+        private:
+                std::vector<text_handle> vec_;
+        };
+        
+        struct side_by_side_composite : decl{
+                size_t y_len()const override{
+                        size_t ret{0};
+                        for( auto const& h : vec_ )
+                                ret = std::max( ret, h->y_len() );
+                        return ret;
+                }
+                size_t x_len()const override{
+                        size_t ret{0};
+                        for( auto const& h : vec_ )
+                                ret += h->x_len();
+                        return ret;
+                }
+                std::unique_ptr<text_object> to_object()const override{
+                        auto ret{ std::make_unique<text_object>() };
+                        for( auto const& item : vec_){
+                                auto child{ item->to_object() };
+
+                                for(; ret->size() < child->size() ;)
+                                        ret->emplace_back();
+                                ret->pad_square();
+
+
+                                auto out{ ret->begin() };
+                                for( auto const& l : *child ){
+                                        *out += l;
+                                        ++out;
+                                }
+                        }
+                        return std::move(ret);
+                }
+                side_by_side_composite& push(text_handle handle){
+                        vec_.push_back(std::move(handle));
+                        return *this;
                 }
         private:
                 std::vector<text_handle> vec_;

@@ -246,8 +246,15 @@ void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)
 
         auto root = std::make_shared<tc::above_below_composite>();
         root->push(title);
+        #if 0
         root->push(board);
         root->push(score);
+        #endif
+        auto l0 { std::make_shared<tc::side_by_side_composite>() };
+        l0->push(board);
+        l0->push(score);
+
+        root->push(l0);
 
         title->set( std::make_shared<tc::text>("          SCRABBLE"));
         board->set( std::make_shared<detail::board_view>(ctx));
