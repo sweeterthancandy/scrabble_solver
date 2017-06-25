@@ -88,6 +88,7 @@ fu! ScrabbleTileAdd(c,x,y)
         return TileAdd(a:c, a:x + g:scrabble_xo, a:y + g:scrabble_yo)
 endfu
 fu! Init()
+        call setpos('.', [0, g:scrabble_yo + 7, g:scrabble_xo + 7, 0])
 
         let l:world = []
         let l:world += ['black', 'darkBlue', 'darkGreen', 'darkCyan' ]
@@ -145,7 +146,6 @@ fu! Init()
         "call TileAdd('hi_tl', g:scrabble_xo + 14, g:scrabble_yo + 14)
 
         
-        "call setpos('.', [0, g:scrabble_yo + 4, g:scrabble_xo + 5, 0])
 
         return
          for i in range(0,100)

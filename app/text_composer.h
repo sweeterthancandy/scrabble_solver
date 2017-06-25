@@ -146,8 +146,8 @@ namespace tc{
                         return std::move(obj);
                 }
                 void accept(text_object const& obj)override{
-                        std::cout << "text got\n";
-                        obj.display(std::cout);
+                        //std::cout << "text got\n";
+                        //obj.display(std::cout);
                 }
         private:
                 std::string str_;
@@ -266,7 +266,7 @@ namespace tc{
                          */
                         size_t offset{0};
                         for( auto const& item : vec_){
-                                PRINT_SEQ((item->x_len())(item->y_len()));
+                                //PRINT_SEQ((item->x_len())(item->y_len()));
                                 if( item->y_len() == dynamic ){
                                         /*
                                             (offset,0)------+
@@ -359,7 +359,7 @@ namespace tc{
                          */
                         size_t offset{0};
                         for( auto const& item : vec_){
-                                PRINT_SEQ((item->x_len())(item->y_len()));
+                                //PRINT_SEQ((item->x_len())(item->y_len()));
                                 if( item->x_len() == dynamic ){
                                         /*
                                             (0,offset)------+

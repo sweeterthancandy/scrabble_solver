@@ -145,8 +145,6 @@ namespace detail{
                                 return;
 
                         auto board_view{ obj.make_static_view( 2, 2, ctx_->width, ctx_->height) };
-                        std::cout << "board view = \n";
-                        board_view.display(std::cout);
 
                         ss::board next(ctx_->width, ctx_->height);
                         size_t y{0};
@@ -156,8 +154,6 @@ namespace detail{
                                 }
                                 ++y;
                         }
-                        std::cout << "next=\n";
-                        next.dump();
                         on_parse_(next);
                 }
         private:
@@ -193,7 +189,6 @@ namespace detail{
                         if( first == std::string::npos )
                                 return;
                         std::string rs{ rack_s.substr(first+1, last - first -1 ) };
-                        PRINT_SEQ((rs));
                         on_parse_(rs);
                 }
         private:
@@ -335,23 +330,13 @@ game_context_io::game_context_io(){
 void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
 
         title_->set(std::make_shared<detail::hud_view>(ctx));
-        rack_ ->set(std::make_shared<detail::rack_view>(ctx, [](auto const& r){ PRINT_SEQ((r)); }));
-        board_->set(std::make_shared<detail::board_view>(ctx, [](auto const& b){ b.dump(); }));
+        rack_ ->set(std::make_shared<detail::rack_view>(ctx, [](auto const& r){}));
+        board_->set(std::make_shared<detail::board_view>(ctx, [](auto const& b){}));
         score_->set(std::make_shared<detail::score_view>(ctx));
 
         auto obj{ root_->to_object() };
         
         obj->display(ostr);
-
-        std::stringstream sstr;
-        obj->display(sstr);
-        auto meta{ tc::text_object::from_string(sstr.str()) };
-
-        root_->accept( *meta );
-
-        std::stringstream sstr2;
-        obj->display(sstr2);
-        parse(ctx, sstr2);
 
 }
 
@@ -361,11 +346,8 @@ boost::optional<game_context_io::parse_result_t> game_context_io::parse(game_con
         boost::optional<ss::board> brd;
 
         rack_ ->set(std::make_shared<detail::rack_view>(ctx, [&](auto const& r){ 
-                                                        std::cout << "got rack " << r << "\n";
                                                         rack = r; }));
         board_->set(std::make_shared<detail::board_view>(ctx, [&](auto const& b){
-                                                         std::cout << "got board\n";
-                                                         b.dump();
                                                          brd = b; }));
         auto meta{ tc::text_object::from_istream(istr) };
         root_->accept(*meta);
