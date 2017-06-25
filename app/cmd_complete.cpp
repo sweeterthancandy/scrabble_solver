@@ -18,6 +18,7 @@ struct complete : sub_command{
 
                 boost::optional<int> x;
                 boost::optional<int> y;
+                boost::optional<int> max;
                 boost::optional<ss::array_orientation> orien;
 
 
@@ -52,6 +53,11 @@ struct complete : sub_command{
                                         i+=2;
                                         continue;
                                 }
+                                if( args[i] == "--max" ){
+                                        max = boost::lexical_cast<int>(args[i+1]);
+                                        i+=2;
+                                        continue;
+                                }
                                 if( args[i] == "--orientation"){
                                         if( args[i+1] == "vertical" )
                                                 orien = ss::array_orientation::vertical;
@@ -62,6 +68,21 @@ struct complete : sub_command{
                                 }
                                 // fall
                         case 1:
+                                if( args[i] == "--vim"){
+                                        consumer =  
+                                                [&](std::vector<ss::word_placement> const& _){
+                                                        std::string s;
+                                                        for(size_t x{0};x<_.front().get_x();++x)
+                                                                s += ctx.board(x,_.front().get_y());
+                                                        s += _.front().get_word();
+                                                        for(;s.size() < 15;)
+                                                                s += ctx.board(s.size(),_.front().get_y());
+
+                                                        std::cout << "|" << s << "|\n";
+                                                };
+                                        i+=1;
+                                        continue;
+                                }
                                 if( args[i] == "--all" ){
                                         consumer =  
                                                 [&](std::vector<ss::word_placement> const& _){
@@ -74,7 +95,7 @@ struct complete : sub_command{
                                         i+=1;
                                         continue;
                                 }
-                                BOOST_THROW_EXCEPTION(std::domain_error("expected --x <x> --y <y>"));
+                                BOOST_THROW_EXCEPTION(std::domain_error("unknown " + args[i]));
                         }
                 }
 
@@ -92,6 +113,7 @@ struct complete : sub_command{
                 }
                 ss::rack rack{ ctx.players[ctx.active_player].rack };
                 std::vector<std::vector<ss::word_placement> > all_placements;
+                size_t count{0};
                 strat->yeild( ctx.board, rack, *ctx.dict_ptr, 
                                [&](std::vector<ss::word_placement> const& placements)mutable
                                {
@@ -101,7 +123,10 @@ struct complete : sub_command{
                                                 return;
                                         if( orien && orien != placements.front().get_orientation() )
                                                 return;
+                                        if( max && count == *max )
+                                                return;
                                         consumer(placements);
+                                        ++count;
                                });
 
                 return EXIT_SUCCESS;

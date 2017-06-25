@@ -129,7 +129,7 @@ namespace detail{
                         ostr << "\n";
                         auto sv{ ctx_->board.to_string_vec() };
                         int i{0};
-                        std::string top{ "+" + std::string(ctx_->width,'-') + "+"};
+                        std::string top{ " +" + std::string(ctx_->width,'-') + "+"};
 
                         ostr << top << "\n";
                         for( auto const& line : sv ){

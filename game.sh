@@ -1,1 +1,1 @@
-gvim -u driver.vim
+vim -u driver.vim

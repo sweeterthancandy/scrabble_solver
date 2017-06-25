@@ -42,7 +42,7 @@ struct init : sub_command{
                 ctx.height = 15;
                 ctx.board = ss::board(ctx.width, ctx.height);
                 ctx.players.emplace_back();
-                ctx.players.back().backend = "ai";
+                ctx.players.back().backend = "text";
                 ctx.players.back().rack = ctx.bag.substr(ctx.bag.size()-7);
                 ctx.bag.resize( ctx.bag.size() - 7 );
                 ctx.players.emplace_back();
