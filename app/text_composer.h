@@ -1,6 +1,9 @@
 #ifndef TEXT_COMPOSER_H
 #define TEXT_COMPOSER_H
 
+#include <cassert>
+#include "ss_print.h"
+
 namespace tc{
 
         constexpr const size_t dynamic{static_cast<size_t>(-1)};
@@ -18,33 +21,74 @@ namespace tc{
                 auto end()const  { return vec_.end(); }
 
                 auto size()const { return vec_.size(); }
+                auto height()const { return size(); }
+                auto width()const {
+                        size_t w{0};
+                        for(auto const& l : vec_ ){
+                                w = std::max(l.size(), w);
+                        }
+                        return w;
+                }
 
                 void push_back(std::string line){ vec_.push_back(line); }
                 void emplace_back(){ vec_.emplace_back(); }
 
+
+
                 void pad_square(){
-                        size_t width{0};
+                        size_t w{0};
                         for(auto const& l : vec_ ){
-                                width = std::max(l.size(), width);
+                                w = std::max(l.size(), w);
                         }
+                        pad(w);
+                }
+                void pad(size_t w){
                         for(auto& l : vec_ ){
-                                if( l.size() < width ){
-                                        size_t padding{ width - l.size()};
+                                if( l.size() < w ){
+                                        size_t padding{ w - l.size()};
                                         l += std::string(padding, ' ');
                                 }
                         }
 
                 }
 
+                /*
+                   x_size == dynamic => all
+                   y_size == dynamic => all
+                 */
                 text_object make_static_view(size_t x_offset,
                                              size_t y_offset,
                                              size_t x_size,
-                                             size_t y_size)
+                                             size_t y_size)const
                 {
-                        text_object result;
-                        for(size_t y{y_offset}; y - y_offset < y_size; ++y){
-                                result.push_back( vec_[y].substr(x_offset, x_size) );
+                        size_t y_last{0};
+                        if( y_last == dynamic ){
+                                y_last = vec_.size();
+                        } else {
+                                y_last = std::min(y_offset + y_size, vec_.size());
                         }
+                        text_object result;
+                        for(size_t y{y_offset}; y < y_last; ++y){
+                                if( vec_[y].size() == 0 ){
+                                        result.emplace_back();
+                                } else if( x_size == dynamic ||
+                                           x_offset + x_size > vec_[y].size() ){
+                                        result.push_back( vec_[y].substr(x_offset) );
+                                } else {
+                                        result.push_back( vec_[y].substr(x_offset, x_size) );
+                                }
+                        }
+                        assert( result.width()  <= x_size && "post condition failed");
+                        assert( result.height() <= y_size && "post condition failed");
+
+                        #if 0
+                        std::cout << "BEGIN\n";
+                        display(std::cout);
+                        PRINT_SEQ((x_offset)(y_offset)(x_size)(y_size)(y_last));
+                        result.display(std::cout);
+                        std::cout << "END\n";
+                        #endif
+
                         return std::move(result);
                 }
                 template<class T>
@@ -52,7 +96,7 @@ namespace tc{
                         vec_.back() += boost::lexical_cast<std::string>(val);
                         return *this;
                 }
-                void display(std::ostream& ostr){
+                void display(std::ostream& ostr)const{
                         for( auto const& l : vec_){
                                 ostr << l << "\n";
                         }
@@ -78,8 +122,9 @@ namespace tc{
 
         struct decl{
                 virtual ~decl()=default;
-                virtual size_t x_len()const=0;
-                virtual size_t y_len()const=0;
+                virtual size_t x_len()const{ return tc::dynamic; }
+                virtual size_t y_len()const{ return tc::dynamic; }
+                virtual void accept(text_object const& obj)const=0;
                 virtual std::unique_ptr<text_object> to_object()const=0;
         };
 
@@ -97,6 +142,10 @@ namespace tc{
                         *obj << str_;
                         return std::move(obj);
                 }
+                void accept(text_object const& obj)const override{
+                        std::cout << "text got\n";
+                        obj.display(std::cout);
+                }
         private:
                 std::string str_;
         };
@@ -108,18 +157,33 @@ namespace tc{
                         ,height_(height)
                 {}
                 size_t x_len()const override{ 
-                        check_();
-                        return handle_->x_len();
+                        return width_;
                 }
                 size_t y_len()const override{
-                        check_();
-                        return handle_->y_len();
+                        return height_;
                 }
                 std::unique_ptr<text_object> to_object()const override{
                         check_();
-                        return handle_->to_object();
+                        auto obj{ handle_->to_object() };
+                        // now pad it
+                        for(; height_ != dynamic && obj->size() < height_;)
+                                obj->emplace_back();
+                        if( width_ != dynamic )
+                                obj->pad(width_);
+
+
+                        if( obj->width() > width_ ||
+                            obj->height() > height_ ){
+                                std::cerr << "Warning, text object is too large\n";
+                        }
+
+                        return std::move(obj);
                 }
                 void set(text_handle h){ handle_ = h; }
+                void accept(text_object const& obj)const override{
+                        if( handle_ )
+                                handle_->accept(obj);
+                }
         private:
                 void check_()const{
                         if( ! handle_ )
@@ -157,17 +221,33 @@ namespace tc{
         };
         #endif
 
+        /*
+             +------+
+             +      |
+             +------+
+             +      |
+             +------+
+             +      |
+             +------+
+              
+         */
         struct above_below_composite : decl{
                 size_t x_len()const override{
                         size_t ret{0};
-                        for( auto const& h : vec_ )
+                        for( auto const& h : vec_ ){
+                                if( h->x_len() == dynamic )
+                                        return dynamic;
                                 ret = std::max( ret, h->x_len() );
+                        }
                         return ret;
                 }
                 size_t y_len()const override{
                         size_t ret{0};
-                        for( auto const& h : vec_ )
+                        for( auto const& h : vec_ ){
+                                if( h->y_len() == dynamic )
+                                        return dynamic;
                                 ret += h->y_len();
+                        }
                         return ret;
                 }
                 std::unique_ptr<text_object> to_object()const override{
@@ -183,21 +263,77 @@ namespace tc{
                 void push(text_handle handle){
                         vec_.push_back(std::move(handle));
                 }
+                void accept(text_object const& obj)const override{
+                        /*
+                          
+                           |
+                           |y
+                           |
+                           |
+                          \/
+
+                         */
+                        size_t offset{0};
+                        for( auto const& item : vec_){
+                                PRINT_SEQ((item->x_len())(item->y_len()));
+                                if( item->y_len() == dynamic ){
+                                        /*
+                                            (offset,0)------+
+                                             +              |
+                                             +              |
+                                             +              |
+                                             +              |
+                                             +-----------(end,end)
+                                        */
+                                        item->accept(obj.make_static_view(0, offset, dynamic, dynamic ));
+                                        return;
+                                }
+                                /*
+                                    (offset,0)--------------------+
+                                     +                            |
+                                     +                            |
+                                     +                            |
+                                     +                            |
+                                     +--------------(end,offset+item->y_len())
+                                     +                            |
+                                     +                            |
+                                     +         (rest)             |
+                                     +                            |
+                                     +----------------------(end,end)
+
+                                */
+                                item->accept(obj.make_static_view(0, offset, dynamic, item->y_len()));
+                                offset += item->y_len();
+                        }
+                }
         private:
                 std::vector<text_handle> vec_;
         };
         
+        /*
+         
+             +------+------+------+
+             +      |      |      |
+             +------+------+------+
+              
+         */
         struct side_by_side_composite : decl{
                 size_t y_len()const override{
                         size_t ret{0};
-                        for( auto const& h : vec_ )
+                        for( auto const& h : vec_ ){
+                                if( h->y_len() == dynamic )
+                                        return dynamic;
                                 ret = std::max( ret, h->y_len() );
+                        }
                         return ret;
                 }
                 size_t x_len()const override{
                         size_t ret{0};
-                        for( auto const& h : vec_ )
+                        for( auto const& h : vec_ ){
+                                if( h->x_len() == dynamic )
+                                        return dynamic;
                                 ret += h->x_len();
+                        }
                         return ret;
                 }
                 std::unique_ptr<text_object> to_object()const override{
@@ -221,6 +357,41 @@ namespace tc{
                 side_by_side_composite& push(text_handle handle){
                         vec_.push_back(std::move(handle));
                         return *this;
+                }
+                
+                void accept(text_object const& obj)const override{
+                        /*
+                          
+                           ------------>
+                              x
+
+                         */
+                        size_t offset{0};
+                        for( auto const& item : vec_){
+                                PRINT_SEQ((item->x_len())(item->y_len()));
+                                if( item->x_len() == dynamic ){
+                                        /*
+                                            (0,offset)------+
+                                             +              |
+                                             +              |
+                                             +              |
+                                             +              |
+                                             +-----------(end,end)
+                                        */
+                                        item->accept(obj.make_static_view(offset, 0, dynamic, dynamic ));
+                                        return;
+                                }
+                                /*
+                                    (0,offset)--------------------+-------------------+
+                                     +                            |                   |
+                                     +                            |      rest         |
+                                     +                            |                   |
+                                     +                            |                   |
+                                     +-----------(end,offset+item->y_len())--------(end,end)
+                                */
+                                item->accept(obj.make_static_view(offset, 0, item->x_len(), dynamic));
+                                offset += item->x_len();
+                        }
                 }
         private:
                 std::vector<text_handle> vec_;

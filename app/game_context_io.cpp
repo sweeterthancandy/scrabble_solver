@@ -175,8 +175,6 @@ namespace{
 namespace detail{
         struct board_view : tc::decl{
                 explicit board_view(game_context const& ctx):ctx_(&ctx){}
-                size_t x_len()const override{ return tc::dynamic; }
-                size_t y_len()const override{ return tc::dynamic; }
                 std::unique_ptr<tc::text_object> to_object()const override{
                         std::stringstream ostr;
                         ostr << ' ';
@@ -196,14 +194,16 @@ namespace detail{
                         ostr << "\n";
                         return tc::text_object::from_string(ostr.str());
                 }
+                void accept(tc::text_object const& obj)const override{
+                        std::cout << "board view got\n";
+                        obj.display(std::cout);
+                }
         private:
                 game_context const* ctx_;
         };
         
         struct score_view : tc::decl{
                 explicit score_view(game_context const& ctx):ctx_(&ctx){}
-                size_t x_len()const override{ return tc::dynamic; }
-                size_t y_len()const override{ return tc::dynamic; }
                 std::unique_ptr<tc::text_object> to_object()const override{
                         using std::get;
                         std::stringstream ostr;
@@ -233,6 +233,10 @@ namespace detail{
                         }
                         return tc::text_object::from_string(ostr.str());
                 }
+                void accept(tc::text_object const& obj)const override{
+                        std::cout << "score view got\n";
+                        obj.display(std::cout);
+                }
         private:
                 game_context const* ctx_;
         };
@@ -240,13 +244,13 @@ namespace detail{
 } // anon
 
 void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
-        auto title = std::make_shared<tc::placeholder>("title", tc::dynamic, 1);
-        auto rack  = std::make_shared<tc::placeholder>("rack", tc::dynamic, 1);
-        auto board = std::make_shared<tc::placeholder>("board", 20,20);
-        auto score = std::make_shared<tc::placeholder>("score", 20,20);
+        //                                              name  |   width    | height
+        auto title = std::make_shared<tc::placeholder>("title", 40         , 3     );
+        auto board = std::make_shared<tc::placeholder>("board", 20         ,20     );
+        auto rack  = std::make_shared<tc::placeholder>("rack" , 20         , 1     );
+        auto score = std::make_shared<tc::placeholder>("score", 50         , 50    );
 
-        auto root = std::make_shared<tc::above_below_composite>();
-        root->push(title);
+        #if 1
         auto first { std::make_shared<tc::above_below_composite>() };
         first->push(board);
         first->push(rack);
@@ -254,7 +258,17 @@ void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)
         second->push(first);
         second->push(score);
 
+        auto root = std::make_shared<tc::above_below_composite>();
+        root->push(title);
         root->push(second);
+        #endif
+        #if 0
+        auto root = std::make_shared<tc::above_below_composite>();
+        root->push(title);
+        root->push(board);
+        root->push(rack);
+        root->push(score);
+        #endif
 
         title->set( std::make_shared<tc::text>("          SCRABBLE"));
         rack ->set( std::make_shared<tc::text>("        |" + ctx.get_active()->rack + "|" ));
@@ -264,6 +278,12 @@ void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)
         auto obj{ root->to_object() };
         
         obj->display(ostr);
+
+        std::stringstream sstr;
+        obj->display(sstr);
+        auto meta{ tc::text_object::from_string(sstr.str()) };
+
+        root->accept( *meta );
 
 }
 
