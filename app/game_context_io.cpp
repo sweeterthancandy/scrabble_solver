@@ -179,17 +179,17 @@ namespace detail{
                 size_t y_len()const override{ return tc::dynamic; }
                 std::unique_ptr<tc::text_object> to_object()const override{
                         std::stringstream ostr;
-                        ostr << std::string(4, ' ');
+                        ostr << ' ';
                         for(size_t i=0;i!=ctx_->width;++i)
                                 ostr << boost::lexical_cast<std::string>(i%10);
                         ostr << "\n";
                         auto sv{ ctx_->board.to_string_vec() };
                         int i{0};
-                        std::string top{ std::string(4,' ') + "+" + std::string(ctx_->width,'-') + "+"};
+                        std::string top{ "+" + std::string(ctx_->width,'-') + "+"};
 
                         ostr << top << "\n";
                         for( auto const& line : sv ){
-                                ostr << "   " << (i%10) << "|" << line << "|\n";
+                                ostr  << (i%10) << "|" << line << "|\n";
                                 ++i;
                         }
                         ostr << top << "\n";
@@ -241,22 +241,23 @@ namespace detail{
 
 void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
         auto title = std::make_shared<tc::placeholder>("title", tc::dynamic, 1);
+        auto rack  = std::make_shared<tc::placeholder>("rack", tc::dynamic, 1);
         auto board = std::make_shared<tc::placeholder>("board", 20,20);
         auto score = std::make_shared<tc::placeholder>("score", 20,20);
 
         auto root = std::make_shared<tc::above_below_composite>();
         root->push(title);
-        #if 0
-        root->push(board);
-        root->push(score);
-        #endif
-        auto l0 { std::make_shared<tc::side_by_side_composite>() };
-        l0->push(board);
-        l0->push(score);
+        auto first { std::make_shared<tc::above_below_composite>() };
+        first->push(board);
+        first->push(rack);
+        auto second { std::make_shared<tc::side_by_side_composite>() };
+        second->push(first);
+        second->push(score);
 
-        root->push(l0);
+        root->push(second);
 
         title->set( std::make_shared<tc::text>("          SCRABBLE"));
+        rack ->set( std::make_shared<tc::text>("        |" + ctx.get_active()->rack + "|" ));
         board->set( std::make_shared<detail::board_view>(ctx));
         score->set( std::make_shared<detail::score_view>(ctx));
 
