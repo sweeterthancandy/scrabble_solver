@@ -22,6 +22,7 @@ void game_context_io::write(game_context const& ctx, std::ostream& ostr)const{
         root.put("state", ctx.state);
         root.put("skips", ctx.skips);
         root.put("is_rotated", ctx.is_rotated);
+        root.put("winner", ctx.winner);
         for( auto const& item : ctx.log )
                 root.add("logs.log", item);
         for( auto const& item : ctx.moves )
@@ -62,6 +63,7 @@ void game_context_io::read(game_context& ctx, std::istream& ostr)const{
         ctx.state         = static_cast<game_state>(root.get<int>("state"));
         ctx.skips         = root.get<size_t>("skips");
         ctx.is_rotated    = root.get<bool>("is_rotated");
+        ctx.winner        = root.get<int>("winner");
         
         ctx.board         = ss::board(ctx.width, ctx.height);
 
@@ -100,72 +102,12 @@ void game_context_io::read(game_context& ctx, std::istream& ostr)const{
         }
 
 }
-void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
-        using std::get;
-        ostr << "          SCRABBLE                                                                                  \n";
-        ostr << "\n";
-        ostr << std::string(4, ' ');
-        for(size_t i=0;i!=ctx.width;++i)
-                ostr << boost::lexical_cast<std::string>(i%10);
-        ostr << "\n";
-        auto sv{ ctx.board.to_string_vec() };
-        int i{0};
-        std::string top{ std::string(4,' ') + "+" + std::string(ctx.width,'-') + "+"};
-
-        ostr << top << "\n";
-        for( auto const& line : sv ){
-                ostr << "   " << (i%10) << "|" << line << "|\n";
-                ++i;
-        }
-        ostr << top << "\n";
-        ostr << "\n";
-        /////////////////////////////////////////////////////////////////////////
-        // Scores
-        /////////////////////////////////////////////////////////////////////////
-        ostr << "        |" << ctx.get_active()->rack << "|\n"
-             << "\n";
-        for(auto const& p : ctx.players )
-                ostr << std::setw(22) << std::internal << p.backend << "|";
-        ostr << "\n";
-        ostr << std::string(22 * ctx.players.size(),'-') << "\n";
-        std::vector<unsigned> sigma( ctx.players.size(), 0 );
-        for( size_t i=0;;++i){
-                bool end{false};
-                for( size_t j=0;j!=ctx.players.size();++j){
-                        auto const& p{ ctx.players[j] };
-                        if( ! ( i < p.score.size() )) {
-                                end = true;
-                                ostr << std::setw(10) << "" << std::setw(0) << "|"
-                                     << std::setw(5)  << "" << std::setw(0) << "|"
-                                     << std::setw(5)  << "" << std::setw(0) << "|";
-                        } else {
-                                sigma[j] += get<0>(p.score[i]);
-                                ostr << std::setw(10) << std::left << get<1>(p.score[i]) << std::setw(0) << "|"
-                                     << std::setw(5)  << get<0>(p.score[i]) << std::setw(0) << "|"
-                                     << std::setw(5)  << sigma[j]   << std::setw(0) << "|";
-                        }
-                }
-                ostr << "\n";
-                if( end ) break;
-        }
-
-        /////////////////////////////////////////////////////////////////////////
-        // logs
-        /////////////////////////////////////////////////////////////////////////
-
-        ostr << "\nmoves:\n    ";
-        boost::copy( ctx.moves, std::ostream_iterator<std::string>(ostr, "\n    "));
-        ostr << "\nlogs:\n    ";
-        boost::copy( ctx.log, std::ostream_iterator<std::string>(ostr, "\n    "));
-        ostr << "\ndebug:\n    ";
-        boost::copy( ctx.debug, std::ostream_iterator<std::string>(ostr, "\n    "));
-}
 
 void game_context_io::write_all(game_context const& ctx)const{
         std::ofstream of("scrabble.json");
         std::ofstream scof(ctx.scratch);
         write(ctx, of);
-        render_better(ctx, scof);
+        render(ctx, scof);
 }
 
 
@@ -300,8 +242,42 @@ namespace detail{
                 game_context const* ctx_;
         };
 
-        auto make_title(){
-                auto title_aux{ tc::text_object::from_string(
+        struct hud_view : tc::decl{
+                explicit hud_view(game_context const& ctx):ctx_(&ctx){
+			m_[0] = 
+R"_(
+  _____  _                         __  __          ___           
+ |  __ \| |                       /_ | \ \        / (_)          
+ | |__) | | __ _ _   _  ___ _ __   | |  \ \  /\  / / _ _ __  ___ 
+ |  ___/| |/ _` | | | |/ _ \ '__|  | |   \ \/  \/ / | | '_ \/ __|
+ | |    | | (_| | |_| |  __/ |     | |    \  /\  /  | | | | \__ \
+ |_|    |_|\__,_|\__, |\___|_|     |_|     \/  \/   |_|_| |_|___/
+                  __/ |                                          
+                 |___/                                           
+)_";
+			m_[1] = 
+R"_(
+  _____  _                         ___   __          ___           
+ |  __ \| |                       |__ \  \ \        / (_)          
+ | |__) | | __ _ _   _  ___ _ __     ) |  \ \  /\  / / _ _ __  ___ 
+ |  ___/| |/ _` | | | |/ _ \ '__|   / /    \ \/  \/ / | | '_ \/ __|
+ | |    | | (_| | |_| |  __/ |     / /_     \  /\  /  | | | | \__ \
+ |_|    |_|\__,_|\__, |\___|_|    |____|     \/  \/   |_|_| |_|___/
+                  __/ |                                            
+                 |___/                                             
+)_";
+			draw_ = 
+R"_(
+  _____                     
+ |  __ \                    
+ | |  | |_ __ __ ___      __
+ | |  | | '__/ _` \ \ /\ / /
+ | |__| | | | (_| |\ V  V / 
+ |_____/|_|  \__,_| \_/\_/  
+)_";
+                            
+                            
+			title_ = 
 R"_(
    _____                _          _____                _     _     _      
   / ____|              | |        / ____|              | |   | |   | |     
@@ -311,32 +287,54 @@ R"_(
   \_____\__,_|_| |_|\__,_|\__, | |_____/ \___|_|  \__,_|_.__/|_.__/|_|\___|
                            __/ |                                           
                           |___/                                            
-)_")};
+)_";
+                }
+                std::unique_ptr<tc::text_object> to_object()const override{
+			std::string str{title_};
+                        switch(ctx_->state){
+                        case State_Finished:
+				if( m_.count( ctx_->winner ) ){
+					str = m_.find(ctx_->winner)->second;
+				}
+                                break;
+                        default:
+                                break;
+                        }
+                        return tc::text_object::from_string(str);
+                }
+        private:
+                game_context const* ctx_;
+		std::string title_;
+		std::string draw_;
+                std::map<int, std::string> m_;
+        };
 
-                return std::make_shared<tc::text_object_view>(*title_aux);
-        }
 } // detail
 } // anon
 game_context_io::game_context_io(){
+	//                                                  width      | height
         title_ = std::make_shared<tc::placeholder>("title", 80         , 9     );
         board_ = std::make_shared<tc::placeholder>("board", 20         ,20     );
         rack_  = std::make_shared<tc::placeholder>("rack" , 20         , 3     );
         score_ = std::make_shared<tc::placeholder>("score", 50         , 50    );
+        //hud_   = std::make_shared<tc::placeholder>("hud"  , 20         , 9    );
 
-        auto first { std::make_shared<tc::above_below_composite>() };
-        first->push(board_);
-        first->push(rack_);
+        auto left { std::make_shared<tc::above_below_composite>() };
+        left->push(board_);
+        left->push(rack_);
+	//left->push(hud_);
+
         auto second { std::make_shared<tc::side_by_side_composite>() };
-        second->push(first);
+        second->push(left);
         second->push(score_);
 
         root_ = std::make_shared<tc::above_below_composite>();
         root_->push(title_);
         root_->push(second);
 }
-void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
+void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
 
-        title_->set(detail::make_title() );
+        title_->set(std::make_shared<detail::hud_view>(ctx));
         rack_ ->set(std::make_shared<detail::rack_view>(ctx, [](auto const& r){ PRINT_SEQ((r)); }));
         board_->set(std::make_shared<detail::board_view>(ctx, [](auto const& b){ b.dump(); }));
         score_->set(std::make_shared<detail::score_view>(ctx));

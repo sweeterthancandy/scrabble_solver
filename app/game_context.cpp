@@ -139,4 +139,5 @@ void game_context::on_finish_(){
         std::stringstream sstr;
         sstr << "player " << max_idx << " wins with " << max_score;
         log.push_back(sstr.str());
+        winner = max_idx;
 }

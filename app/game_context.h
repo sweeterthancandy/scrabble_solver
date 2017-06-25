@@ -66,6 +66,8 @@ public:
         game_state state;
         size_t skips;
         bool is_rotated;
+
+        int winner;
 };
 
 #include "game_context_io.h"

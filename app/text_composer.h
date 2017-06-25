@@ -127,7 +127,7 @@ namespace tc{
                 virtual ~decl()=default;
                 virtual size_t x_len()const{ return tc::dynamic; }
                 virtual size_t y_len()const{ return tc::dynamic; }
-                virtual void accept(text_object const& obj)=0;
+                virtual void accept(text_object const& obj){}
                 virtual std::unique_ptr<text_object> to_object()const=0;
         };
 

@@ -28,6 +28,7 @@ private:
         std::shared_ptr<tc::placeholder>           board_;
         std::shared_ptr<tc::placeholder>           rack_;
         std::shared_ptr<tc::placeholder>           score_;
+        std::shared_ptr<tc::placeholder>           hud_;
         std::shared_ptr<tc::above_below_composite> root_;
 };
 
