@@ -7,6 +7,7 @@ struct game_context_io{
         void read(game_context& ctx, std::istream& ostr)const;
         void write(game_context const& ctx, std::ostream& ostr)const;
         void render(game_context const& ctx, std::ostream& ostr)const;
+        void render_better(game_context const& ctx, std::ostream& ostr)const;
         void write_all(game_context const& ctx)const;
 };
 

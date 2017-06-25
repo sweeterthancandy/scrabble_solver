@@ -193,6 +193,8 @@ fu! Init()
                  echom l:cmd
                  execute l:cmd
                  "call TileAdd( l:hi, i+1, 1)
+
+                 call matchadd('Title', 'player \d\+ wins.*')
          endfor
 
 endfu

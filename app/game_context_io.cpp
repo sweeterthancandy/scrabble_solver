@@ -103,7 +103,7 @@ void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
         using std::get;
         ostr << "          SCRABBLE                                                                                  \n";
         ostr << "\n";
-        ostr << std::string(5, ' ');
+        ostr << std::string(4, ' ');
         for(size_t i=0;i!=ctx.width;++i)
                 ostr << boost::lexical_cast<std::string>(i%10);
         ostr << "\n";
@@ -121,8 +121,7 @@ void game_context_io::render(game_context const& ctx, std::ostream& ostr)const{
         /////////////////////////////////////////////////////////////////////////
         // Scores
         /////////////////////////////////////////////////////////////////////////
-        ostr << "        |" << ctx.get_active()->rack << "|\n";
-        ostr << "    Score\n"
+        ostr << "        |" << ctx.get_active()->rack << "|\n"
              << "\n";
         for(auto const& p : ctx.players )
                 ostr << std::setw(22) << std::internal << p.backend << "|";
@@ -166,4 +165,115 @@ void game_context_io::write_all(game_context const& ctx)const{
         std::ofstream scof(ctx.scratch);
         write(ctx, of);
         render(ctx, scof);
+        render_better(ctx, std::cout);
 }
+
+
+#include "text_composer.h"
+
+namespace{
+namespace detail{
+        struct board_view : tc::decl{
+                explicit board_view(game_context const& ctx):ctx_(&ctx){}
+                size_t x_len()const override{ return tc::dynamic; }
+                size_t y_len()const override{ return tc::dynamic; }
+                std::unique_ptr<tc::text_object> to_object()const override{
+                        std::stringstream ostr;
+                        ostr << std::string(4, ' ');
+                        for(size_t i=0;i!=ctx_->width;++i)
+                                ostr << boost::lexical_cast<std::string>(i%10);
+                        ostr << "\n";
+                        auto sv{ ctx_->board.to_string_vec() };
+                        int i{0};
+                        std::string top{ std::string(4,' ') + "+" + std::string(ctx_->width,'-') + "+"};
+
+                        ostr << top << "\n";
+                        for( auto const& line : sv ){
+                                ostr << "   " << (i%10) << "|" << line << "|\n";
+                                ++i;
+                        }
+                        ostr << top << "\n";
+                        ostr << "\n";
+                        return tc::text_object::from_string(ostr.str());
+                }
+        private:
+                game_context const* ctx_;
+        };
+        
+        struct score_view : tc::decl{
+                explicit score_view(game_context const& ctx):ctx_(&ctx){}
+                size_t x_len()const override{ return tc::dynamic; }
+                size_t y_len()const override{ return tc::dynamic; }
+                std::unique_ptr<tc::text_object> to_object()const override{
+                        using std::get;
+                        std::stringstream ostr;
+                        for(auto const& p : ctx_->players )
+                                ostr << std::setw(22) << std::internal << p.backend << "|";
+                        ostr << "\n";
+                        ostr << std::string(22 * ctx_->players.size(),'-') << "\n";
+                        std::vector<unsigned> sigma( ctx_->players.size(), 0 );
+                        for( size_t i=0;;++i){
+                                bool end{false};
+                                for( size_t j=0;j!=ctx_->players.size();++j){
+                                        auto const& p{ ctx_->players[j] };
+                                        if( ! ( i < p.score.size() )) {
+                                                end = true;
+                                                ostr << std::setw(10) << "" << std::setw(0) << "|"
+                                                     << std::setw(5)  << "" << std::setw(0) << "|"
+                                                     << std::setw(5)  << "" << std::setw(0) << "|";
+                                        } else {
+                                                sigma[j] += get<0>(p.score[i]);
+                                                ostr << std::setw(10) << std::left << get<1>(p.score[i]) << std::setw(0) << "|"
+                                                     << std::setw(5)  << get<0>(p.score[i]) << std::setw(0) << "|"
+                                                     << std::setw(5)  << sigma[j]   << std::setw(0) << "|";
+                                        }
+                                }
+                                ostr << "\n";
+                                if( end ) break;
+                        }
+                        return tc::text_object::from_string(ostr.str());
+                }
+        private:
+                game_context const* ctx_;
+        };
+} // detail
+} // anon
+
+void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
+        auto title = std::make_shared<tc::placeholder>("title", tc::dynamic, 1);
+        auto board = std::make_shared<tc::placeholder>("board", 20,20);
+        auto score = std::make_shared<tc::placeholder>("score", 20,20);
+
+        auto root = std::make_shared<tc::above_below_composite>();
+        root->push(title);
+        root->push(board);
+        root->push(score);
+
+        title->set( std::make_shared<tc::text>("          SCRABBLE"));
+        board->set( std::make_shared<detail::board_view>(ctx));
+        score->set( std::make_shared<detail::score_view>(ctx));
+
+        auto obj{ root->to_object() };
+        
+        obj->display(ostr);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
