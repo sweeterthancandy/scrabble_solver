@@ -180,7 +180,14 @@ void game_context::apply_placements(std::vector<ss::word_placement> const& place
         sstr << "player " << active_player << " placed " << placements.front().get_word() << " at <" << placements.front().get_x() << "," << placements.front().get_y() << "> for " << score << " points";
         moves.emplace_back(sstr.str());
         p.score.push_back(score);
-        ++active_player;
-        active_player = active_player % players.size();
+
+        if( p.rack.size() == 0 ){
+                state = State_Finished;
+        } else{
+                state = State_Running; // bacause this could of been first move
+
+                ++active_player;
+                active_player = active_player % players.size();
+        }
 
 }

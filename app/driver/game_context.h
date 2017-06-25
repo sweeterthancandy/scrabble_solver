@@ -42,8 +42,8 @@ struct player_t{
 
 enum game_state{
         State_FirstPlacement,
-        State_running,
-        State_finished
+        State_Running,
+        State_Finished
 };
 
 struct game_context{

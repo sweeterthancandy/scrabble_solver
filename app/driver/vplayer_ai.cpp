@@ -11,7 +11,16 @@ namespace{
         struct vplayer_ai : vplayer{
                 player_move exec(game_context& ctx)override{
                         // player the au
-                        auto strat{ ss::strategy_factory::get_inst()->make("fast_solver") };
+                        
+                        std::shared_ptr<ss::strategy> strat;
+                        switch(ctx.state){
+                        case State_FirstPlacement:
+                                strat = ss::strategy_factory::get_inst()->make("first");
+                                break;
+                        default:
+                                strat = ss::strategy_factory::get_inst()->make("fast_solver");
+                                break;
+                        }
                         ss::rack rack{ ctx.players[ctx.active_player].rack };
                         std::vector<std::vector<ss::word_placement> > all_placements;
                         strat->yeild( ctx.board, rack, *ctx.dict_ptr, 

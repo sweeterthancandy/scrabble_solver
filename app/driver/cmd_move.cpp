@@ -23,7 +23,7 @@ struct move : sub_command{
 
 
                 try{
-                        for(; ctx.state != State_finished;){
+                        for(; ctx.state != State_Finished;){
                                 auto m{ ctx.players[ctx.active_player].vp->exec( ctx ) };
 
                                 if( boost::get<skip_go_t>(&m) ){
@@ -35,8 +35,15 @@ struct move : sub_command{
                                 } else if ( auto ptr = boost::get<std::vector<ss::word_placement> >(&m) ){
                                         std::cout << "moving\n";
                                         ctx.apply_placements( *ptr );
+                                        write();
                                 }
                         }
+
+                        if( ctx.state = State_Finished ){
+                                ctx.finish_game();
+                        }
+
+
                         write();
                 } catch(...){
                         write();
