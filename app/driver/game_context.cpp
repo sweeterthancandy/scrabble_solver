@@ -54,15 +54,28 @@ void game_context::read(std::istream& ostr){
         bag           = root.get<std::string>("bag");
         scratch       = root.get<std::string>("scratch");
         dict          = root.get<std::string>("dict");
-        dict_ptr      =  ss::dictionary_factory::get_inst()->make(dict);
+        dict_ptr      = ss::dictionary_factory::get_inst()->make(dict);
         metric        = root.get<std::string>("metric");
-        metric_ptr    =  ss::metric_factory::get_inst()->make(metric);
+        metric_ptr    = ss::metric_factory::get_inst()->make(metric);
         active_player = root.get<size_t>("active_player");
         width         = root.get<size_t>("width");
         height        = root.get<size_t>("height");
         state         = static_cast<game_state>(root.get<int>("state"));
         skips         = root.get<size_t>("skips");
         is_rotated    = root.get<bool>("is_rotated");
+        
+        board         = ss::board(width, height);
+
+        size_t y=0;
+        for( auto const& c : root.get_child("board") ){
+                //std::string l{ c.second.get<std::string>("line") };
+                std::string l{ c.second.data() };
+                for( size_t x=0;x!=l.size();++x){
+                        board(x,y) = l[x];
+                }
+                ++y;
+        }
+
         for( auto const& p : root.get_child("players")){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");
@@ -83,16 +96,7 @@ void game_context::read(std::istream& ostr){
         for( auto const& p : root.get_child("logs")){
                 log.push_back(p.second.data());
         }
-        size_t y=0;
-        board = ss::board(width, height);
-        for( auto const& c : root.get_child("board") ){
-                //std::string l{ c.second.get<std::string>("line") };
-                std::string l{ c.second.data() };
-                for( size_t x=0;x!=l.size();++x){
-                        board(x,y) = l[x];
-                }
-                ++y;
-        }
+
 }
 void game_context::render(std::ostream& ostr)const{
         using std::get;
@@ -121,7 +125,8 @@ void game_context::render(std::ostream& ostr)const{
              << "\n";
         for(auto const& p : players )
                 ostr << std::setw(22) << std::internal << p.backend << "|";
-        ostr << "\n------------------------\n";
+        ostr << "\n";
+        ostr << std::string(22 * players.size(),'-') << "\n";
         std::vector<unsigned> sigma( players.size(), 0 );
         for( size_t i=0;;++i){
                 bool end{false};
