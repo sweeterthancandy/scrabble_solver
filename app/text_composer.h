@@ -102,16 +102,19 @@ namespace tc{
                         }
                 }
                 static std::unique_ptr<text_object> from_string(std::string const& str){
-                        auto obj{ std::make_unique<text_object>() };
                         std::stringstream sstr;
                         sstr << str;
+                        return from_istream(sstr);
+                }
+                static std::unique_ptr<text_object> from_istream(std::istream& istr){
+                        auto obj{ std::make_unique<text_object>() };
                         for(;;){
                                 std::string line;
-                                std::getline(sstr, line);
-                                if( line.empty() && sstr.eof())
+                                std::getline(istr, line);
+                                if( line.empty() && istr.eof())
                                         break;
                                 obj->push_back(std::move(line));
-                                if( sstr.eof() )
+                                if( istr.eof() )
                                         break;
                         }
                         return std::move(obj);
@@ -124,7 +127,7 @@ namespace tc{
                 virtual ~decl()=default;
                 virtual size_t x_len()const{ return tc::dynamic; }
                 virtual size_t y_len()const{ return tc::dynamic; }
-                virtual void accept(text_object const& obj)const=0;
+                virtual void accept(text_object const& obj)=0;
                 virtual std::unique_ptr<text_object> to_object()const=0;
         };
 
@@ -142,12 +145,25 @@ namespace tc{
                         *obj << str_;
                         return std::move(obj);
                 }
-                void accept(text_object const& obj)const override{
+                void accept(text_object const& obj)override{
                         std::cout << "text got\n";
                         obj.display(std::cout);
                 }
         private:
                 std::string str_;
+        };
+        
+        struct text_object_view : decl{
+                explicit text_object_view(text_object const& obj):obj_(obj){}
+                size_t x_len()const override{ return obj_.width(); }
+                size_t y_len()const override{ return obj_.height(); }
+                std::unique_ptr<text_object> to_object()const override{
+                        return std::make_unique<text_object>(obj_);
+                }
+                void accept(text_object const& obj)override{
+                }
+        private:
+                text_object obj_;
         };
 
         struct placeholder : decl{
@@ -180,7 +196,7 @@ namespace tc{
                         return std::move(obj);
                 }
                 void set(text_handle h){ handle_ = h; }
-                void accept(text_object const& obj)const override{
+                void accept(text_object const& obj)override{
                         if( handle_ )
                                 handle_->accept(obj);
                 }
@@ -195,31 +211,6 @@ namespace tc{
                 text_handle handle_;
         };
 
-
-        #if 0
-        struct text_object_view : text_item{
-                size_t x()const override{
-                        return x_;
-                }
-                size_t y()const override{
-                        return y_;
-                }
-                size_t x_len()const override{
-                        return obj_.x_len();
-                }
-                size_t y_len()const override{
-                        return obj_.y_len();
-                }
-                std::unique_ptr<text_object> to_object()const override{
-                        auto ret{ std::make_unique<text_object>(obj_) };
-                        return std::move(ret);
-                }
-        private:
-                size_t x_;
-                size_t y_;
-                text_object obj_;
-        };
-        #endif
 
         /*
              +------+
@@ -263,7 +254,7 @@ namespace tc{
                 void push(text_handle handle){
                         vec_.push_back(std::move(handle));
                 }
-                void accept(text_object const& obj)const override{
+                void accept(text_object const& obj)override{
                         /*
                           
                            |
@@ -359,7 +350,7 @@ namespace tc{
                         return *this;
                 }
                 
-                void accept(text_object const& obj)const override{
+                void accept(text_object const& obj)override{
                         /*
                           
                            ------------>

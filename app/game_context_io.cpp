@@ -1,6 +1,7 @@
 #include "game_context_io.h"
 
 #include <algorithm>
+#include <functional>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -174,7 +175,11 @@ void game_context_io::write_all(game_context const& ctx)const{
 namespace{
 namespace detail{
         struct board_view : tc::decl{
-                explicit board_view(game_context const& ctx):ctx_(&ctx){}
+                board_view(game_context const& ctx,
+                           std::function<void(ss::board const&)> const& on_parse )
+                        : ctx_(&ctx)
+                        , on_parse_(on_parse)
+                {}
                 std::unique_ptr<tc::text_object> to_object()const override{
                         std::stringstream ostr;
                         ostr << ' ';
@@ -194,12 +199,65 @@ namespace detail{
                         ostr << "\n";
                         return tc::text_object::from_string(ostr.str());
                 }
-                void accept(tc::text_object const& obj)const override{
-                        std::cout << "board view got\n";
-                        obj.display(std::cout);
+                void accept(tc::text_object const& obj)override{
+                        if( obj.height() < 3 + 15 )
+                                return;
+
+                        auto board_view{ obj.make_static_view( 2, 2, ctx_->width, ctx_->height) };
+                        std::cout << "board view = \n";
+                        board_view.display(std::cout);
+
+                        ss::board next(ctx_->width, ctx_->height);
+                        size_t y{0};
+                        for( auto const& l : board_view ){
+                                for(size_t x{0};x!=ctx_->width;++x){
+                                        next(x,y) = l[x];
+                                }
+                                ++y;
+                        }
+                        std::cout << "next=\n";
+                        next.dump();
+                        on_parse_(next);
                 }
         private:
                 game_context const* ctx_;
+                std::function<void(ss::board const&)> on_parse_;
+        };
+        
+        struct rack_view : tc::decl{
+                rack_view(game_context const& ctx,
+                           std::function<void(std::string const&)> const& on_parse )
+                        : ctx_(&ctx)
+                        , on_parse_(on_parse)
+                {}
+                std::unique_ptr<tc::text_object> to_object()const override{
+                        auto const& r{ ctx_->get_active()->rack };
+
+                        std::string header{"+" + std::string(r.size(), '-') + "+"};
+                        std::string middle{"|" + r + "|"};
+
+                        auto obj{ std::make_unique<tc::text_object>() };
+                        obj->push_back(header);
+                        obj->push_back(middle);
+                        obj->push_back(header);
+                        return std::move(obj);
+                }
+                void accept(tc::text_object const& obj)override{
+                        if( obj.height() < 3 )
+                                return;
+                        std::string rack_s{ *std::next(obj.begin()) };
+                        auto first{ rack_s.find_first_of('|') };
+                        auto last{ rack_s.find_last_of('|') };
+                        // should never happen
+                        if( first == std::string::npos )
+                                return;
+                        std::string rs{ rack_s.substr(first+1, last - first -1 ) };
+                        PRINT_SEQ((rs));
+                        on_parse_(rs);
+                }
+        private:
+                game_context const* ctx_;
+                std::function<void(std::string const&)> on_parse_;
         };
         
         struct score_view : tc::decl{
@@ -233,49 +291,58 @@ namespace detail{
                         }
                         return tc::text_object::from_string(ostr.str());
                 }
-                void accept(tc::text_object const& obj)const override{
+                void accept(tc::text_object const& obj)override{
+                        #if 0
                         std::cout << "score view got\n";
                         obj.display(std::cout);
+                        #endif
                 }
         private:
                 game_context const* ctx_;
         };
+
+        auto make_title(){
+                auto title_aux{ tc::text_object::from_string(
+R"_(
+   _____                _          _____                _     _     _      
+  / ____|              | |        / ____|              | |   | |   | |     
+ | |     __ _ _ __   __| |_   _  | (___   ___ _ __ __ _| |__ | |__ | | ___ 
+ | |    / _` | '_ \ / _` | | | |  \___ \ / __| '__/ _` | '_ \| '_ \| |/ _ \
+ | |___| (_| | | | | (_| | |_| |  ____) | (__| | | (_| | |_) | |_) | |  __/
+  \_____\__,_|_| |_|\__,_|\__, | |_____/ \___|_|  \__,_|_.__/|_.__/|_|\___|
+                           __/ |                                           
+                          |___/                                            
+)_")};
+
+                return std::make_shared<tc::text_object_view>(*title_aux);
+        }
 } // detail
 } // anon
+game_context_io::game_context_io(){
+        title_ = std::make_shared<tc::placeholder>("title", 80         , 9     );
+        board_ = std::make_shared<tc::placeholder>("board", 20         ,20     );
+        rack_  = std::make_shared<tc::placeholder>("rack" , 20         , 3     );
+        score_ = std::make_shared<tc::placeholder>("score", 50         , 50    );
 
-void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
-        //                                              name  |   width    | height
-        auto title = std::make_shared<tc::placeholder>("title", 40         , 3     );
-        auto board = std::make_shared<tc::placeholder>("board", 20         ,20     );
-        auto rack  = std::make_shared<tc::placeholder>("rack" , 20         , 1     );
-        auto score = std::make_shared<tc::placeholder>("score", 50         , 50    );
-
-        #if 1
         auto first { std::make_shared<tc::above_below_composite>() };
-        first->push(board);
-        first->push(rack);
+        first->push(board_);
+        first->push(rack_);
         auto second { std::make_shared<tc::side_by_side_composite>() };
         second->push(first);
-        second->push(score);
+        second->push(score_);
 
-        auto root = std::make_shared<tc::above_below_composite>();
-        root->push(title);
-        root->push(second);
-        #endif
-        #if 0
-        auto root = std::make_shared<tc::above_below_composite>();
-        root->push(title);
-        root->push(board);
-        root->push(rack);
-        root->push(score);
-        #endif
+        root_ = std::make_shared<tc::above_below_composite>();
+        root_->push(title_);
+        root_->push(second);
+}
+void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)const{
 
-        title->set( std::make_shared<tc::text>("          SCRABBLE"));
-        rack ->set( std::make_shared<tc::text>("        |" + ctx.get_active()->rack + "|" ));
-        board->set( std::make_shared<detail::board_view>(ctx));
-        score->set( std::make_shared<detail::score_view>(ctx));
+        title_->set(detail::make_title() );
+        rack_ ->set(std::make_shared<detail::rack_view>(ctx, [](auto const& r){ PRINT_SEQ((r)); }));
+        board_->set(std::make_shared<detail::board_view>(ctx, [](auto const& b){ b.dump(); }));
+        score_->set(std::make_shared<detail::score_view>(ctx));
 
-        auto obj{ root->to_object() };
+        auto obj{ root_->to_object() };
         
         obj->display(ostr);
 
@@ -283,11 +350,36 @@ void game_context_io::render_better(game_context const& ctx, std::ostream& ostr)
         obj->display(sstr);
         auto meta{ tc::text_object::from_string(sstr.str()) };
 
-        root->accept( *meta );
+        root_->accept( *meta );
+
+        std::stringstream sstr2;
+        obj->display(sstr2);
+        parse(ctx, sstr2);
 
 }
 
 
+boost::optional<game_context_io::parse_result_t> game_context_io::parse(game_context const& ctx, std::istream& istr)const{
+        boost::optional<std::string> rack;
+        boost::optional<ss::board> brd;
+
+        rack_ ->set(std::make_shared<detail::rack_view>(ctx, [&](auto const& r){ 
+                                                        std::cout << "got rack " << r << "\n";
+                                                        rack = r; }));
+        board_->set(std::make_shared<detail::board_view>(ctx, [&](auto const& b){
+                                                         std::cout << "got board\n";
+                                                         b.dump();
+                                                         brd = b; }));
+        auto meta{ tc::text_object::from_istream(istr) };
+        root_->accept(*meta);
+        
+        if( rack && brd ){
+                game_context_io::parse_result_t result{ brd.get(), rack.get() };
+                return std::move(result);
+        }
+        std::cerr << "bad parse\n";
+        return boost::none;
+}
 
 
 
