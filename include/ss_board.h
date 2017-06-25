@@ -47,6 +47,8 @@ namespace ss{
                 void fill( char val);
                 void dump(array_orientation orientation = array_orientation::horizontal, std::ostream& ostr = std::cout)const;
                 std::vector<std::string> to_string_vec()const;
+                void rotate_90();
+                void transpose();
 
         private:
                 size_t x_len_;

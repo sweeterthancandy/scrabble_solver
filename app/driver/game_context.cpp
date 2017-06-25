@@ -24,6 +24,7 @@ void game_context::write(std::ostream& ostr)const{
         root.put("metric", metric);
         root.put("state", state);
         root.put("skips", skips);
+        root.put("is_rotated", is_rotated);
         for( auto const& item : log )
                 root.add("logs.log", item);
         for( auto const& item : moves )
@@ -61,6 +62,7 @@ void game_context::read(std::istream& ostr){
         height        = root.get<size_t>("height");
         state         = static_cast<game_state>(root.get<int>("state"));
         skips         = root.get<size_t>("skips");
+        is_rotated    = root.get<bool>("is_rotated");
         for( auto const& p : root.get_child("players")){
                 players.emplace_back();
                 players.back().backend = p.second.get<std::string>("backend");

@@ -88,7 +88,7 @@ struct game_context{
         
         game_state state;
         size_t skips;
-
+        bool is_rotated;
 };
 
 #endif // SS_GAME_CONTEXT_H

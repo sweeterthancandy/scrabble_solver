@@ -167,4 +167,19 @@ namespace ss{
         }
         #endif
 
+        void board::transpose(){
+                auto tmp{ board{*this, array_orientation::vertical}};
+                *this = std::move(tmp);
+        }
+        void board::rotate_90(){
+                for(size_t x=0;x!=x_len_;++x){
+                        for(size_t y=0;y<y_len_/2;++y){
+                                size_t y2 = y_len_ -1 - y;
+                                std::swap( (*this)(x,y), (*this)(x,y2));
+                        }
+                }
+                this->transpose();
+        }
+
+
 }

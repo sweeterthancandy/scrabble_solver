@@ -10,8 +10,14 @@ struct rotate : sub_command{
                         ctx.read(ifs);
                 }while(0);
 
-                ss::board tmp{ ctx.board, ss::array_orientation::vertical };
-                ctx.board = std::move(tmp);
+                if( ctx.is_rotated ){
+                        ctx.board.rotate_90();
+                        ctx.board.rotate_90();
+                        ctx.board.rotate_90();
+                } else {
+                        ctx.board.rotate_90();
+                }
+                ctx.is_rotated = ! ctx.is_rotated;
 
                 std::ofstream of("scrabble.json");
                 ctx.write(of);

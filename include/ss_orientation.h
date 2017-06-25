@@ -14,7 +14,7 @@ namespace ss{
                 switch(orientation){
                 case array_orientation::horizontal:
                         return array_orientation::vertical;
-                case array_orientation::vertical:
+                case array_orientation::vertical: // transpose
                         return array_orientation::horizontal;
                 }
         }
