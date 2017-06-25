@@ -165,8 +165,7 @@ void game_context_io::write_all(game_context const& ctx)const{
         std::ofstream of("scrabble.json");
         std::ofstream scof(ctx.scratch);
         write(ctx, of);
-        render(ctx, scof);
-        render_better(ctx, std::cout);
+        render_better(ctx, scof);
 }
 
 
